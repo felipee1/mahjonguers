@@ -245,7 +245,8 @@ export const ScoringModal: React.FC<ScoringModalProps> = ({
         {getTilesByType("man").map((tile) => (
           <SelectItem key={tile.id + section} value={tile.id}>
             <span className="text-lg mr-2">{tile.display}</span>
-            {tile.value}
+            {tile.is_red ? "Red " : ""}
+            {tile.type}
           </SelectItem>
         ))}
 
@@ -256,7 +257,8 @@ export const ScoringModal: React.FC<ScoringModalProps> = ({
         {getTilesByType("pin").map((tile) => (
           <SelectItem key={tile.id + section} value={tile.id}>
             <span className="text-lg mr-2">{tile.display}</span>
-            {tile.value}
+            {tile.is_red ? "Red " : ""}
+            {tile.type}
           </SelectItem>
         ))}
 
@@ -267,18 +269,29 @@ export const ScoringModal: React.FC<ScoringModalProps> = ({
         {getTilesByType("sou").map((tile) => (
           <SelectItem key={tile.id + section} value={tile.id}>
             <span className="text-lg mr-2">{tile.display}</span>
-            {tile.value}
+            {tile.is_red ? "Red " : ""}
+            {tile.type}
           </SelectItem>
         ))}
 
         {/* Honor */}
         <div className="px-2 py-1 text-sm font-semibold text-muted-foreground">
-          Honor Tiles
+          Wind Tiles
         </div>
-        {getTilesByType("honor").map((tile) => (
-          <SelectItem key={tile.id + section} value={tile.id}>
+        {getTilesByType("wind").map((tile) => (
+          <SelectItem key={tile.id} value={tile.id}>
             <span className="text-lg mr-2">{tile.display}</span>
-            {tile.value}
+            {tile.value} {tile.type}
+          </SelectItem>
+        ))}
+        {/* Honor */}
+        <div className="px-2 py-1 text-sm font-semibold text-muted-foreground">
+          Dragon Tiles
+        </div>
+        {getTilesByType("dragon").map((tile) => (
+          <SelectItem key={tile.id} value={tile.id}>
+            <span className="text-lg mr-2">{tile.display}</span>
+            {tile.value} {tile.type}
           </SelectItem>
         ))}
       </div>

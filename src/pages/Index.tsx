@@ -25,6 +25,7 @@ const Index = () => {
     gamePhase,
     startNewRound,
     finishRound,
+    drawRound,
     kan,
     checkOnGoingGames,
     finishMatch,
@@ -90,6 +91,14 @@ const Index = () => {
     }
     setShowScoringModal(false);
   };
+  const handleTenpai = (tenpaiPlayers: string[]) => {
+    if (!tenpaiPlayers) {
+      drawRound(tenpaiPlayers);
+    } else {
+      drawRound(tenpaiPlayers);
+    }
+    setShowScoringModal(false);
+  };
 
   const handleKan = () => {
     setShowDoraModal(true);
@@ -129,6 +138,7 @@ const Index = () => {
             onFinishMatch={handleFinishMatch}
             onRon={handleRon}
             onTsumo={handleTsumo}
+            onTenpai={handleTenpai}
             onKan={handleKan}
             onBack={handleBack}
           />

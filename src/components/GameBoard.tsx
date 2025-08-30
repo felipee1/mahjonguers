@@ -6,7 +6,10 @@ import { useMahjongGame } from "@/contexts/MatchContext";
 import { Wind } from "@/types/game";
 import { getDoraIndicatorTile } from "@/utils/mahjong-game";
 import { ArrowLeft, Minus, Plus, Square } from "lucide-react";
-import React from "react";
+import React, { useState } from "react"; // IMPORT useState
+
+// Import the new modal component
+import { TenpaiModal } from "@/components/modals/TenpaiModal";
 
 interface GameBoardProps {
   doras;
@@ -16,6 +19,7 @@ interface GameBoardProps {
   onRon: () => void;
   onTsumo: () => void;
   onKan: () => void;
+  onTenpai: (tenpaiPlayerNames: string[]) => void; // UPDATED: Handler now takes selected names
   onBack: () => void;
 }
 
@@ -27,10 +31,26 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   onRon,
   onTsumo,
   onKan,
+  onTenpai,
   onBack,
 }) => {
   const { t } = useLanguage();
   const { players, currentRound, prevalentWind } = useMahjongGame();
+
+  // ADDED: State to manage the Tenpai modal visibility
+  const [isTenpaiModalOpen, setIsTenpaiModalOpen] = useState(false);
+
+  // ADDED: Handler that opens the modal
+  const handleTenpaiClick = () => {
+    setIsTenpaiModalOpen(true);
+  };
+
+  // ADDED: Handler that confirms the selected tenpai players
+  const handleConfirmTenpai = (tenpaiPlayerNames: string[]) => {
+    // Pass the selected names up to the game manager
+    onTenpai(tenpaiPlayerNames);
+    // The manager will advance the game phase, the modal will close via the state change
+  };
 
   const getWindDisplay = (wind: Wind) => {
     const windMap = {
@@ -74,6 +94,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
   return (
     <div className="min-h-screen chinese-pattern p-4">
+      {/* ADDED: Tenpai Selection Modal */}
+      <TenpaiModal
+        isOpen={isTenpaiModalOpen}
+        onOpenChange={setIsTenpaiModalOpen}
+        onConfirmTenpai={handleConfirmTenpai}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <Button variant="ghost" onClick={onBack} className="hover:bg-accent/20">
@@ -188,7 +215,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               {doras.map((dora, index) => (
                 <div key={dora.id + index} className="space-y-2 m-4">
                   <Badge variant="outline" className="text-xs">
-                    {t("doraNext")} {index + 1}
+                    {getDoraIndicatorTile(dora).value}{" "}
+                    {getDoraIndicatorTile(dora).type}
                   </Badge>
                   <div className="flex justify-center">
                     <div className="w-16 h-20 bg-muted rounded border-2 border-primary flex items-center justify-center p-1">
@@ -229,7 +257,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               {t("startNewRound")}
             </Button>
           ) : (
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-4 gap-4">
+              {/* Ron Button */}
               <Button
                 onClick={onRon}
                 size="lg"
@@ -238,6 +267,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               >
                 {t("ron")}
               </Button>
+              {/* Tsumo Button */}
               <Button
                 onClick={onTsumo}
                 size="lg"
@@ -246,6 +276,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               >
                 {t("tsumo")}
               </Button>
+              {/* Kan Button */}
               <Button
                 onClick={onKan}
                 size="lg"
@@ -253,6 +284,15 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 className="bg-card/80 border-accent/50 hover:bg-accent/10 hover:border-accent transition-smooth"
               >
                 {t("kan")}
+              </Button>
+              {/* Tenpai Button - CALLS THE MODAL */}
+              <Button
+                onClick={handleTenpaiClick} // Use the new handler to open the modal
+                size="lg"
+                variant="outline"
+                className="bg-card/80 border-cyan-500/50 hover:bg-cyan-500/10 hover:border-cyan-500 transition-smooth"
+              >
+                {t("tenpai")}
               </Button>
             </div>
           )}

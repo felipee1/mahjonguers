@@ -144,6 +144,85 @@ export class RiichiMahjongMatch {
   }
 
   /**
+   * Handles the end of a round that results in an exhaustive draw (ryūkyoku).
+   * @param tenpaiPlayerNames An array of names of players who declared tenpai.
+   */
+  drawRound(tenpaiPlayerNames: string[]): void {
+    console.log("\n" + "=".repeat(50));
+    console.log(`Round ${this.currentRound} Finished! - Exhaustive Draw (Ryūkyoku)`);
+
+    const tenpaiPlayers = this.players.filter(p => tenpaiPlayerNames.includes(p.name));
+    const notTenpaiPlayers = this.players.filter(p => !tenpaiPlayerNames.includes(p.name));
+    
+    const numTenpai = tenpaiPlayers.length;
+    const numNotTenpai = notTenpaiPlayers.length;
+
+    // Tenpai scoring rule: The total of 3000 points is exchanged.
+    // This happens only if 1, 2, or 3 players are in tenpai.
+    if (numTenpai > 0 && numTenpai < this.numPlayers) {
+      // Points distributed by the tenpai count:
+      // 1 tenpai: 3000 pts from 3 players (1000 each)
+      // 2 tenpai: 1500 pts from 2 players (1500 each)
+      // 3 tenpai: 1000 pts from 1 player (3000 total)
+      const tenpaiGain = 3000 / numTenpai; // Amount each tenpai player *gains*
+      const notTenpaiLoss = 3000 / numNotTenpai; // Amount each not-tenpai player *loses*
+
+      // 1. Players in tenpai gain points
+      tenpaiPlayers.forEach(player => {
+        // The points received from each not-tenpai player. 
+        // Example: 1 tenpai player receives 1000 from each of the 3 not-tenpai players.
+        const pointsGained = tenpaiGain * numNotTenpai;
+        player.score += pointsGained;
+        console.log(`${player.name} (Tenpai) gains ${pointsGained} points.`);
+      });
+
+      // 2. Players not in tenpai lose points
+      notTenpaiPlayers.forEach(player => {
+        // The points lost to each tenpai player. 
+        // Example: 3 not-tenpai players lose 1000 to the 1 tenpai player.
+        const pointsLost = notTenpaiLoss * numTenpai;
+        player.score -= pointsLost;
+        console.log(`${player.name} (Not Tenpai) loses ${pointsLost} points.`);
+      });
+
+      // Optional: Round points to nearest 100 for standard Riichi rules, 
+      // but keeping it as calculated for simplicity.
+    } else {
+      console.log("All players were in tenpai or not in tenpai. No point exchange occurs.");
+    }
+    
+    this._displayCurrentScores();
+
+    // Dealer Continuation Logic (Renchan):
+    // The dealer (this.dealer) retains their seat if they were in tenpai.
+    const dealerWasTenpai = tenpaiPlayers.includes(this.dealer);
+
+    if (dealerWasTenpai) {
+      console.log(
+        `Dealer ${this.dealer.name} was in tenpai, so they will be the dealer again for the next round (Renchan).`
+      );
+      // currentRound does not increment on a dealer win/draw
+    } else {
+      // Rotate the dealer seat
+      this.dealerIndex = (this.dealerIndex + 1) % this.numPlayers;
+      this.dealer = this.players[this.dealerIndex];
+      this.currentRound++; // Round increments only when the dealer rotates
+      console.log("Dealer has been rotated.");
+      this._updatePlayerWinds();
+    }
+
+    if ((this.currentRound - 1) % this.numPlayers === 0) {
+      this._advancePrevalentWind();
+    }
+    
+    this.gamePhase = "finished";
+    this.doraIndicators=[]
+    this.saveGameState();
+
+    console.log("=".repeat(50));
+  }
+
+  /**
    * Adds a new Dora indicator when a Kan is called.
    */
   kan( doraTileName: string): void {

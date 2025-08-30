@@ -24,6 +24,7 @@ interface MahjongGameContextType {
     discardPlayerName: string | null,
     pointAmount: number
   ) => void;
+  drawRound: (tenpaiPlayerNames: string[]) => void;
   kan: (doraTileName: string) => void;
   resetGame: () => void;
   finishMatch: () => void;
@@ -119,6 +120,12 @@ export const MahjongGameProvider: React.FC<MahjongGameProviderProps> = ({
       updateGamePhase("finished");
     }
   };
+  const drawRound = (tenpaiPlayerNames: string[]) => {
+    if (game) {
+      game.drawRound(tenpaiPlayerNames);
+      updateGamePhase("finished");
+    }
+  };
 
   const kan = (doraTileName: string) => {
     if (game) {
@@ -150,6 +157,7 @@ export const MahjongGameProvider: React.FC<MahjongGameProviderProps> = ({
     setGame,
     startNewRound,
     finishRound,
+    drawRound,
     kan,
     resetGame,
     finishMatch,

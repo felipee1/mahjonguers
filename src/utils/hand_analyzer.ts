@@ -272,6 +272,7 @@ function calculateFu(
     fu = 20;
   }
 
+
   const [melds, pair] = meldsAndPair;
   for (let i = 0; i < melds.length; i += 2) {
     const meldType = melds[i];
@@ -747,6 +748,7 @@ export function analyzeMahjongHand({
   const finalYakuDict = getYaku(
     handMahjongTiles,
     doraMahjongTiles as MahjongTile[],
+    uraDoraMahjongTiles as MahjongTile[],
     prevalentWindTile as MahjongTile,
     seatWindTile as MahjongTile,
     winningMahjongTile,

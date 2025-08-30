@@ -86,7 +86,7 @@ export class Player {
 
 export interface Tile {
   id: string;
-  type: 'man' | 'pin' | 'sou' | 'honor';
+  type: 'man' | 'pin' | 'sou' | 'wind' |'dragon';
   value: number | string;
   display?: string;
   is_red?: boolean;
@@ -95,7 +95,7 @@ export interface Tile {
 
 export class MahjongTile implements Tile {
   id: string;
-  type: 'man' | 'pin' | 'sou' | 'honor';
+  type: 'man' | 'pin' | 'sou' | 'wind' |'dragon';
   value: number | string;
   display?: string;
   is_red?: boolean;
@@ -176,16 +176,16 @@ export const MAHJONG_TILES: Tile[] = [
     imageUrl: TILE_IMAGE_MAP[`sou-${i + 1}`],
   })),
   // Honor tiles
-  { id: 'sou-5-dora', type: 'sou', value: 'dora', display: '5索' ,imageUrl: TILE_IMAGE_MAP['sou-5-dora']},
-  { id: 'pin-5-dora', type: 'pin', value: 'dora', display: '5筒' ,imageUrl: TILE_IMAGE_MAP['pin-5-dora']},
-  { id: 'man-5-dora', type: 'man', value: 'dora', display: '5万' ,imageUrl: TILE_IMAGE_MAP['man-5-dora']},
-  { id: 'honor-east', type: 'honor', value: 'east', display: '東' ,imageUrl: TILE_IMAGE_MAP['honor-east']},
-  { id: 'honor-south', type: 'honor', value: 'south', display: '南' ,imageUrl: TILE_IMAGE_MAP['honor-south']},
-  { id: 'honor-west', type: 'honor', value: 'west', display: '西' ,imageUrl: TILE_IMAGE_MAP['honor-west']},
-  { id: 'honor-north', type: 'honor', value: 'north', display: '北' ,imageUrl: TILE_IMAGE_MAP['honor-north']},
-  { id: 'honor-white', type: 'honor', value: 'white', display: '白' ,imageUrl: TILE_IMAGE_MAP['honor-white']},
-  { id: 'honor-green', type: 'honor', value: 'green', display: '發' ,imageUrl: TILE_IMAGE_MAP['honor-green']},
-  { id: 'honor-red', type: 'honor', value: 'red', display: '中',imageUrl: TILE_IMAGE_MAP['honor-red']},
+  { id: 'sou-5-dora', type: 'sou', value: 'dora', display: '5索' ,imageUrl: TILE_IMAGE_MAP['sou-5-dora'], is_red:true},
+  { id: 'pin-5-dora', type: 'pin', value: 'dora', display: '5筒' ,imageUrl: TILE_IMAGE_MAP['pin-5-dora'], is_red:true},
+  { id: 'man-5-dora', type: 'man', value: 'dora', display: '5万' ,imageUrl: TILE_IMAGE_MAP['man-5-dora'], is_red:true},
+  { id: 'honor-east', type: 'wind', value: 'east', display: '東' ,imageUrl: TILE_IMAGE_MAP['honor-east']},
+  { id: 'honor-south', type: 'wind', value: 'south', display: '南' ,imageUrl: TILE_IMAGE_MAP['honor-south']},
+  { id: 'honor-west', type: 'wind', value: 'west', display: '西' ,imageUrl: TILE_IMAGE_MAP['honor-west']},
+  { id: 'honor-north', type: 'wind', value: 'north', display: '北' ,imageUrl: TILE_IMAGE_MAP['honor-north']},
+  { id: 'honor-white', type: 'dragon', value: 'white', display: '白' ,imageUrl: TILE_IMAGE_MAP['honor-white']},
+  { id: 'honor-green', type: 'dragon', value: 'green', display: '發' ,imageUrl: TILE_IMAGE_MAP['honor-green']},
+  { id: 'honor-red', type: 'dragon', value: 'red', display: '中',imageUrl: TILE_IMAGE_MAP['honor-red']},
 ];
 
 export const MAHJONG_CLASS_IDS = [
