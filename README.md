@@ -1,48 +1,143 @@
-### Mahjonguers
+# Mahjonguers 🀄
 
-A browser-based app for managing your Mahjong games with an integrated deep learning model.
-
----
-
-### About the Project
-
-Mahjonguers is a simple and elegant tool for Mahjong enthusiasts. It helps you keep track of your games, and with the power of a deep learning model, it can offer insights into your plays and potential winning hands.
-
-The highlight of this project is the **deep learning model that runs directly in your browser**. This means all the processing is done locally, ensuring your data is private and the app works even offline.
-
-Whether you're a casual player looking to record your victories or a serious competitor wanting to analyze your strategies, Mahjonguers is for you.
+A free, browser-based Mahjong point calculator and match manager with AI-powered tile recognition.
 
 ---
 
-### Features
+## 🎯 What is Mahjonguers?
 
--   **Game Management:** Easily log and save details of your Mahjong matches, including players, scores, and winning hands.
--   **In-Browser Deep Learning:** A trained model uses your game data to analyze hand patterns and provide real-time suggestions and statistics.
--   **No Server Required:** All functionality, including the deep learning model, is self-contained within the browser. There's no backend, so your data never leaves your device.
--   **Intuitive Interface:** A clean and straightforward design makes it easy to input game data and visualize your progress.
--   **Scalable:** The model can be trained on your own data over time, becoming more personalized and accurate the more you play.
+Mahjonguers is a **free tool** designed to make Mahjong scoring simple and match management effortless. Whether you're playing casually with friends or in competitive tournaments, Mahjonguers helps you:
 
----
+- **Calculate points instantly** - No more manual calculations or scoring disputes
+- **Manage matches for free** - Track multiple games, players, and scores without any cost
+- **Recognize tiles with AI** - Just take a picture of your hand and let the AI identify the tiles automatically
 
-### How to Use
-
-1.  **Launch the App:** Simply run npm run dev and open you localhost:8090 in your web browser or access [githubpages](https://felipee1.github.io/mahjonguers).
-2.  **Start a Game:** Input the names of the players and the Mahjong variant you are playing.
-3.  **Record Your Hands:** As you play, enter the tiles of the winning hand and the final scores.
-4.  **Get Insights:** The model will analyze the hand and provide feedback, such as potential `yaku` or `fan` combinations, helping you understand the value of your hand.
-5.  **Review and Analyze:** The app keeps a history of your games, allowing you to review past performance and identify trends in your play.
+All processing happens **directly in your browser** - your data stays private, and the app works offline!
 
 ---
 
-### Technologies Used
+## ✨ Key Features
 
--   **React:** Used for building the user interface with a component-based architecture.
--   **Tailwind CSS:** For fast and efficient styling of the app's modern and responsive design.
--   **ONNX Runtime Web:** Powers the deep learning model, enabling it to run directly in the browser with high performance.
--   **Mahjong Rules Library:** A custom library to handle the complexities of Mahjong scoring and different rule sets.
+### 🧮 Point Calculator
+
+- Instant point calculation for winning hands
+- Support for all standard Riichi Mahjong scoring rules
+- Automatic han and fu calculation
+- Dora indicator tracking
+
+### 📸 AI Tile Recognition
+
+- **Take a photo** of your tiles and the AI identifies them automatically
+- Deep learning model runs entirely in your browser
+- No server uploads - your photos stay on your device
+- Fast and accurate tile detection
+
+### 🎮 Match Management
+
+- Track scores for up to 4 players
+- Automatic dealer rotation and wind assignment
+- Round-by-round score tracking
+- Match history to review past games
+
+### ☁️ Optional Cloud Sync
+
+- **Play without an account** - everything works with local storage
+- **Create a free account** to sync your matches across devices
+- Your choice: stay anonymous or enable cloud backup
+
+### 🌐 Works Everywhere
+
+- No installation required - runs in any modern browser
+- Works offline after first load
+- Mobile-friendly interface
+- Cross-platform compatibility
 
 ---
 
-### Contribution
+## 🚀 How to Use
 
-Mahjonguers is an open project. Contributions are welcome! Feel free to open an issue, send me a message or submit a pull request if you have ideas for new features, bug fixes, or improvements.
+1. **Open the App** - Visit [mahjonguers](https://felipee1.github.io/mahjonguers) or run locally with `npm run dev`
+2. **Optional: if you have an account** - Click the Login button to enable cloud sync (or skip to use locally)
+3. **Start a Match** - Enter player names and begin tracking your game
+4. **Calculate Points** - Use the AI camera to scan tiles or manually select them
+5. **Track Your Games** - All scores are automatically saved and organized
+
+---
+
+## 🏗️ Architecture
+
+### AI Tile Recognition System
+
+The tile recognition feature uses a custom-trained **YOLOv8** (You Only Look Once) object detection model:
+
+1. **Model Training**: The YOLOv8 model was trained on a dataset of Mahjong tiles to detect 42 different tile classes
+2. **ONNX Conversion**: The trained model was converted to ONNX (Open Neural Network Exchange) format for cross-platform compatibility
+3. **Browser Inference**: ONNX Runtime Web runs the model directly in the browser using WebAssembly and WebGPU
+4. **Logits to Probabilities**: Raw model outputs (logits) are processed into probability distributions for accurate classification
+5. **Post-processing**: Non-Maximum Suppression (NMS) removes duplicate detections and overlapping bounding boxes
+
+**Key Features:**
+
+- 🚀 Real-time detection in the browser
+- 🔒 Complete privacy - no server uploads
+- 📱 Works on mobile and desktop
+- ⚡ Hardware acceleration via WebGPU when available
+
+### Data Storage Architecture
+
+The app uses a **dual-storage strategy** for maximum flexibility:
+
+- **LocalStorage** (Always): Immediate, offline-first storage for all users
+- **Firestore** (Optional): Cloud sync when users are logged in
+- **Automatic Sync**: Game state saves to both storage systems simultaneously
+- **Fallback System**: If Firestore fails, localStorage ensures no data loss
+
+---
+
+## 🛠️ Technologies
+
+- **React + TypeScript** - Modern, type-safe UI framework
+- **Tailwind CSS** - Beautiful, responsive design
+- **YOLOv8 + ONNX Runtime Web** - Custom-trained AI model for tile recognition
+- **Firebase** - Optional authentication and cloud sync
+- **Vite** - Lightning-fast development and builds
+
+---
+
+## 🔧 Local Development
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+```
+
+## 🤝 Contributing
+
+Mahjonguers is open source! Contributions are welcome:
+
+- 🐛 Report bugs or issues
+- 💡 Suggest new features
+- 🔧 Submit pull requests
+- 📖 Improve documentation
+
+---
+
+## 📄 License
+
+This project is open source and available for free use.
+
+---
+
+## 🎴 About Riichi Mahjong
+
+Mahjonguers is designed for **Riichi Mahjong** (Japanese Mahjong), the most popular competitive variant worldwide. The scoring system follows standard Japanese rules with support for all common yaku and scoring patterns.
+
+---
+
+**Made with ❤️ for the Mahjong community**

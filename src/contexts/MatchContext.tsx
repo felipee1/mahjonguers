@@ -1,4 +1,6 @@
 // MatchContext.tsx
+import { useAuth } from "@/contexts/AuthContext";
+import { firestoreService } from "@/services/firestoreService";
 import { MahjongTile, Player, Wind } from "@/types/game";
 import { RiichiMahjongMatch } from "@/utils/mahjong-game";
 import {
@@ -22,7 +24,7 @@ interface MahjongGameContextType {
     winningPlayerName: string,
     winType: "ron" | "tsumo",
     discardPlayerName: string | null,
-    pointAmount: number
+    pointAmount: number,
   ) => void;
   drawRound: (tenpaiPlayerNames: string[]) => void;
   kan: (doraTileName: string) => void;
@@ -34,7 +36,7 @@ interface MahjongGameContextType {
 }
 
 const MahjongGameContext = createContext<MahjongGameContextType | undefined>(
-  undefined
+  undefined,
 );
 
 interface MahjongGameProviderProps {
@@ -46,6 +48,7 @@ export const MahjongGameProvider: React.FC<MahjongGameProviderProps> = ({
   children,
   initialPlayerNames = ["", "", "", ""],
 }) => {
+  const { currentUser } = useAuth();
   const [game, setGame] = useState<RiichiMahjongMatch | null>(null);
   const [gamePhase, setGamePhase] = useState<
     "playing" | "waiting" | "finished"
@@ -63,6 +66,35 @@ export const MahjongGameProvider: React.FC<MahjongGameProviderProps> = ({
       setGame(mahjongGame);
     }
   }, [playerNames, game, initialPlayerNames]); // Re-initialize game if playerNames change
+
+  // Load game from Firestore when user logs in
+  useEffect(() => {
+    const loadFromFirestore = async () => {
+      if (currentUser && game) {
+        try {
+          const firestoreState = await firestoreService.loadGameState(
+            currentUser.uid,
+          );
+          if (firestoreState && firestoreState.players.length > 0) {
+            const players = firestoreState.players.map((p: any) => {
+              const player = new Player(p.name, p.points);
+              player.wind = p.wind;
+              player.is_dealer = p.is_dealer;
+              return player;
+            });
+            const new_game = new RiichiMahjongMatch(players.map((p) => p.name));
+            new_game.loadGameState();
+            setGame(new_game);
+            setGamePhase(new_game.gamePhase);
+            console.log("Game state loaded from Firestore.");
+          }
+        } catch (error) {
+          console.error("Failed to load from Firestore:", error);
+        }
+      }
+    };
+    loadFromFirestore();
+  }, [currentUser]);
   const updateGamePhase = (phase: "playing" | "waiting" | "finished") => {
     if (game) {
       console.log("Starting new round ", phase);
@@ -104,44 +136,55 @@ export const MahjongGameProvider: React.FC<MahjongGameProviderProps> = ({
     }
   };
 
-  const finishRound = (
+  const finishRound = async (
     winningPlayerName: string,
     winType: "ron" | "tsumo",
     discardPlayerName: string | null,
-    pointAmount: number
+    pointAmount: number,
   ) => {
     if (game) {
       game.finishRound(
         winningPlayerName,
         winType,
         discardPlayerName,
-        pointAmount
+        pointAmount,
       );
+      await game.saveGameState(currentUser?.uid);
       updateGamePhase("finished");
     }
   };
-  const drawRound = (tenpaiPlayerNames: string[]) => {
+  const drawRound = async (tenpaiPlayerNames: string[]) => {
     if (game) {
       game.drawRound(tenpaiPlayerNames);
+      await game.saveGameState(currentUser?.uid);
       updateGamePhase("finished");
     }
   };
 
-  const kan = (doraTileName: string) => {
+  const kan = async (doraTileName: string) => {
     if (game) {
       game.kan(doraTileName);
+      await game.saveGameState(currentUser?.uid);
     }
   };
 
-  const resetGame = () => {
+  const resetGame = async () => {
     if (game) {
       game.resetGame();
+      await game.saveGameState(currentUser?.uid);
       updateGamePhase("waiting");
     }
   };
-  const finishMatch = () => {
+  const finishMatch = async () => {
     if (game) {
       game.finishMatch();
+      if (currentUser) {
+        try {
+          await firestoreService.deleteGameState(currentUser.uid);
+        } catch (error) {
+          console.error("Failed to clear Firestore state:", error);
+        }
+      }
       updateGamePhase("waiting");
     }
   };

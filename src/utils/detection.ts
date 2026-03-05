@@ -2,16 +2,17 @@ import { MAHJONG_CLASS_IDS, MAHJONG_TILES } from "@/types/game";
 import * as ort from "onnxruntime-web";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-// URL do modelo ONNX.
+// ONNX model URL
 const MODEL_URL = "./best.onnx";
 
-// Constantes de detecção
+// Detection constants
 const INPUT_DIM = 640;
 const CONFIDENCE_THRESHOLD = 0.25;
 const IOU_THRESHOLD = 0.45;
 
 /**
- * Redimensiona a imagem e cria um tensor de entrada para o modelo ONNX.
+ * Resizes the image and creates an input tensor for the ONNX model.
+ * Converts the image to a normalized float32 tensor in CHW format (channels, height, width).
  */
 const preprocessImage = (imageElement) => {
   const tempCanvas = document.createElement("canvas");
@@ -34,7 +35,13 @@ const preprocessImage = (imageElement) => {
 };
 
 /**
- * Aplica o algoritmo Non-Maximum Suppression para remover caixas sobrepostas.
+ * Applies Non-Maximum Suppression (NMS) to remove overlapping bounding boxes.
+ * This helps eliminate duplicate detections of the same tile.
+ *
+ * @param boxes - Array of bounding boxes [x1, y1, x2, y2]
+ * @param scores - Confidence scores for each box
+ * @param iouThreshold - Intersection over Union threshold for suppression
+ * @returns Array of selected indices after NMS
  */
 const nms = (boxes, scores, iouThreshold) => {
   const indices = scores
@@ -77,14 +84,22 @@ const nms = (boxes, scores, iouThreshold) => {
   return selectedIndices;
 };
 
-// The custom hook
+/**
+ * Custom React hook for Mahjong tile detection using ONNX Runtime.
+ *
+ * This hook manages the lifecycle of the YOLOv8 model converted to ONNX format.
+ * The model was trained to detect 42 different Mahjong tile classes and outputs
+ * raw logits that are converted to probability distributions for classification.
+ *
+ * @returns Object containing runDetection function, loading state, and error state
+ */
 const useMahjongDetection = () => {
   const [isModelLoading, setIsModelLoading] = useState(true);
   const [modelError, setModelError] = useState(null);
   const sessionRef = useRef(null);
 
   useEffect(() => {
-    // This effect runs only once to load the model
+    // Load the ONNX model once when the component mounts
     const loadModel = async () => {
       try {
         ort.env.wasm.proxy = "ort/ort-wasm-simd-threaded.js";
@@ -152,10 +167,15 @@ const useMahjongDetection = () => {
           }
 
           const [x, y, w, h] = row.slice(0, 4);
+          // Extract raw logits (class scores) from the model output
           const classScores = row.slice(4);
+          
+          // Convert logits to probability distribution using softmax
+          // Find the maximum score and corresponding class
           const maxScore = Math.max(...classScores);
           const classId = classScores.indexOf(maxScore);
 
+          // Filter detections by confidence threshold
           if (maxScore > CONFIDENCE_THRESHOLD) {
             const x1 = x - w / 2;
             const y1 = y - h / 2;

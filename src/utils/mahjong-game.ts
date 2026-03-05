@@ -341,8 +341,9 @@ export class RiichiMahjongMatch {
 
   /**
    * Saves the current game state to localStorage.
+   * Can optionally save to Firestore if userId is provided.
    */
-  saveGameState(): void {
+  async saveGameState(userId?: string): Promise<void> {
     const gameState = {
       players: this.players.map((player) => ({
         name: player.name,
@@ -356,8 +357,21 @@ export class RiichiMahjongMatch {
       gamePhase: this.gamePhase,
       doraIndicators: this.doraIndicators.map((tile) => tile.id),
     };
+    
+    // Always save to localStorage as fallback
     localStorage.setItem("mahjongGameState", JSON.stringify(gameState));
     console.log("Game state saved to localStorage.");
+    
+    // If user is logged in, also save to Firestore
+    if (userId) {
+      try {
+        const { firestoreService } = await import('@/services/firestoreService');
+        await firestoreService.saveGameState(userId, gameState);
+        console.log("Game state saved to Firestore.");
+      } catch (error) {
+        console.error("Failed to save to Firestore:", error);
+      }
+    }
   }
 
   /**
