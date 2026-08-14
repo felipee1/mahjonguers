@@ -33,6 +33,9 @@ interface MahjongGameContextType {
   setGame: (game: RiichiMahjongMatch) => void;
   setPlayerNames: (names: string[]) => void;
   checkOnGoingGames: () => boolean;
+  roomId: string | null;
+  createRoom: () => Promise<string>;
+  joinRoom: (roomId: string) => Promise<void>;
 }
 
 const MahjongGameContext = createContext<MahjongGameContextType | undefined>(
@@ -54,6 +57,7 @@ export const MahjongGameProvider: React.FC<MahjongGameProviderProps> = ({
     "playing" | "waiting" | "finished"
   >("waiting");
   const [playerNames, setPlayerNames] = useState<string[]>(initialPlayerNames);
+  const [roomId, setRoomId] = useState<string | null>(null);
 
   // Initialize or load game state
   useEffect(() => {
@@ -65,12 +69,12 @@ export const MahjongGameProvider: React.FC<MahjongGameProviderProps> = ({
       setGamePhase("waiting");
       setGame(mahjongGame);
     }
-  }, [playerNames, game, initialPlayerNames]); // Re-initialize game if playerNames change
+  }, [playerNames, game, initialPlayerNames]);
 
   // Load game from Firestore when user logs in
   useEffect(() => {
     const loadFromFirestore = async () => {
-      if (currentUser && game) {
+      if (currentUser && game && !roomId) {
         try {
           const firestoreState = await firestoreService.loadGameState(
             currentUser.uid,
@@ -94,24 +98,78 @@ export const MahjongGameProvider: React.FC<MahjongGameProviderProps> = ({
       }
     };
     loadFromFirestore();
-  }, [currentUser]);
-  const updateGamePhase = (phase: "playing" | "waiting" | "finished") => {
-    if (game) {
-      console.log("Starting new round ", phase);
-      game.gamePhase = phase;
-      setGamePhase(game.gamePhase);
+  }, [currentUser, roomId]);
+
+  // Room synchronization
+  useEffect(() => {
+    if (roomId) {
+      const unsubscribe = firestoreService.listenRoomState(roomId, (gameState) => {
+        if (gameState && gameState.players) {
+          // Sync state from server
+          const new_game = new RiichiMahjongMatch(gameState.players.map((p: any) => p.name));
+          
+          // Rehydrate with explicit object because loadGameState looks at localStorage
+          // Let's manually inject the gameState data instead of relying solely on localStorage
+          // For simplicity we use localStorage as intermediate step
+          localStorage.setItem("mahjongGameState", JSON.stringify(gameState));
+          new_game.loadGameState();
+          
+          setGame(new_game);
+          setGamePhase(new_game.gamePhase);
+          console.log("Game synced with room.");
+        }
+      });
+      return () => unsubscribe();
+    }
+  }, [roomId]);
+
+  const syncState = async (gameStateToSave: any) => {
+    if (roomId) {
+      await firestoreService.updateRoomState(roomId, gameStateToSave);
+    } else if (currentUser) {
+      await firestoreService.saveGameState(currentUser.uid, gameStateToSave);
     }
   };
-  const startNewRound = (initialDoraName: string) => {
+
+  const createRoom = async () => {
+    if (!game) return "";
+    
+    // Make sure we have the latest state serialized
+    await game.saveGameState(); 
+    const savedState = localStorage.getItem("mahjongGameState");
+    if (!savedState) return "";
+
+    const gameState = JSON.parse(savedState);
+    const newRoomId = await firestoreService.createRoom(gameState);
+    setRoomId(newRoomId);
+    return newRoomId;
+  };
+
+  const joinRoom = async (roomToJoin: string) => {
+    const roomState = await firestoreService.getRoomState(roomToJoin);
+    if (roomState) {
+      setRoomId(roomToJoin);
+    } else {
+      throw new Error("Room not found");
+    }
+  };
+
+  const updateGamePhase = async (phase: "playing" | "waiting" | "finished") => {
+    if (game) {
+      console.log("Updating game phase to", phase);
+      game.gamePhase = phase;
+      setGamePhase(game.gamePhase);
+      
+      await game.saveGameState();
+      const savedState = localStorage.getItem("mahjongGameState");
+      if (savedState) await syncState(JSON.parse(savedState));
+    }
+  };
+
+  const startNewRound = async (initialDoraName: string) => {
     if (game) {
       console.log("Starting new round ", initialDoraName);
       game.startRound(initialDoraName);
-      updateGamePhase("playing");
-    } else {
-      console.log("Starting new round and game", initialDoraName);
-      const new_game = new RiichiMahjongMatch(playerNames.map((p) => p));
-      new_game.startRound(initialDoraName);
-      setGame(new_game);
       updateGamePhase("playing");
     }
   };
@@ -143,42 +201,42 @@ export const MahjongGameProvider: React.FC<MahjongGameProviderProps> = ({
     pointAmount: number,
   ) => {
     if (game) {
+      // Create a compatible winner structure for our Double Ron refactored function
       game.finishRound(
-        winningPlayerName,
+        [{ playerName: winningPlayerName, points: pointAmount }],
         winType,
         discardPlayerName,
-        pointAmount,
       );
-      await game.saveGameState(currentUser?.uid);
-      updateGamePhase("finished");
+      await updateGamePhase("finished");
     }
   };
+  
   const drawRound = async (tenpaiPlayerNames: string[]) => {
     if (game) {
       game.drawRound(tenpaiPlayerNames);
-      await game.saveGameState(currentUser?.uid);
-      updateGamePhase("finished");
+      await updateGamePhase("finished");
     }
   };
 
   const kan = async (doraTileName: string) => {
     if (game) {
       game.kan(doraTileName);
-      await game.saveGameState(currentUser?.uid);
+      await game.saveGameState();
+      const savedState = localStorage.getItem("mahjongGameState");
+      if (savedState) await syncState(JSON.parse(savedState));
     }
   };
 
   const resetGame = async () => {
     if (game) {
       game.resetGame();
-      await game.saveGameState(currentUser?.uid);
-      updateGamePhase("waiting");
+      await updateGamePhase("waiting");
     }
   };
   const finishMatch = async () => {
     if (game) {
       game.finishMatch();
-      if (currentUser) {
+      if (currentUser && !roomId) {
         try {
           await firestoreService.deleteGameState(currentUser.uid);
         } catch (error) {
@@ -206,6 +264,9 @@ export const MahjongGameProvider: React.FC<MahjongGameProviderProps> = ({
     finishMatch,
     setPlayerNames,
     checkOnGoingGames,
+    roomId,
+    createRoom,
+    joinRoom,
   };
 
   return (

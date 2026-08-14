@@ -79,20 +79,29 @@ export class RiichiMahjongMatch {
   doraIndicators: MahjongTile[];
   dealer: Player;
   gamePhase: "playing" | "waiting" | "finished";
+  riichiBets: number = 0;
+  discards: Record<string, MahjongTile[]> = {};
 
   /**
    * Manages the overall flow and state of a Mahjong match.
    */
   constructor(playerNames: string[]) {
+    // Replace empty names with default Player N, and ensure exactly 4 players
+    const names = [...playerNames].map((name, i) => name.trim() || `Player ${i + 1}`);
+    while (names.length < 4) {
+      names.push(`Player ${names.length + 1}`);
+    }
     // Try to load a saved game. If not found, start a new one.
     if (!this.loadGameState()) {
-      this.players = playerNames.map((name) => new Player(name));
+      this.players = names.map((name) => new Player(name));
       this.numPlayers = this.players.length;
       this.prevalentWind = "east";
       this.currentRound = 1;
       this.dealerIndex = 0;
       this.doraIndicators = [];
       this.gamePhase="waiting";
+      this.riichiBets = 0;
+      this.players.forEach(p => this.discards[p.name] = []);
       this._setWinds();
       this.dealer = this.players[this.dealerIndex];
     }
@@ -126,8 +135,10 @@ export class RiichiMahjongMatch {
     private _setDora(doraTileName: string): void {
     if (TILE_SET.has(doraTileName)) {
         const doraTile = TILE_SET.get(doraTileName);
-        this.doraIndicators.push(doraTile);
-        console.log(`Dora Indicator is: ${ getDoraIndicatorTile(TILE_SET.get(doraTileName)).display}`);
+        if (doraTile) {
+          this.doraIndicators.push(doraTile);
+          console.log(`Dora Indicator is: ${ getDoraIndicatorTile(doraTile).display}`);
+        }
     } else {
         console.log(`Error: Tile '${doraTileName}' not found.`);
     }
@@ -141,6 +152,60 @@ export class RiichiMahjongMatch {
     const nextIndex = (currentIndex + 1) % 4;
     this.prevalentWind = winds[nextIndex];
     console.log(`\nPrevalent wind has changed to: ${this.prevalentWind}!`);
+  }
+
+  discardTile(playerName: string, tileId: string): void {
+    const tile = TILE_SET.get(tileId);
+    if (!tile) return;
+    if (!this.discards[playerName]) {
+      this.discards[playerName] = [];
+    }
+    this.discards[playerName].push(tile);
+    this.saveGameState();
+  }
+
+  isFuriten(playerName: string, waitTiles: MahjongTile[]): boolean {
+    const playerDiscards = this.discards[playerName] || [];
+    // If the player has discarded ANY of the tiles they are waiting on, they are in Furiten.
+    for (const wait of waitTiles) {
+      if (playerDiscards.some(t => t.equals(wait))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  chombo(playerName: string): void {
+    const player = this.players.find(p => p.name === playerName);
+    if (!player) return;
+
+    console.log("\n" + "=".repeat(50));
+    console.log(`Chombo! ${player.name} committed a severe foul.`);
+    
+    // EMA Chombo: 12000 points (4000 to each other player if non-dealer) or 4000 all (if dealer)
+    // Actually, EMA specifies Mangan payment: Non-dealer pays 4000 to dealer, 2000 to non-dealers. Dealer pays 4000 to all.
+    // Let's implement simplified 12000 total distribution.
+    const payment = player.is_dealer ? 4000 : 3000; // Simplified
+    
+    this.players.forEach(p => {
+      if (p.name !== playerName) {
+        if (player.is_dealer) {
+          p.score += 4000;
+          player.score -= 4000;
+        } else {
+          const amt = p.is_dealer ? 4000 : 2000;
+          p.score += amt;
+          player.score -= amt;
+        }
+      }
+    });
+
+    this._displayCurrentScores();
+    console.log("=".repeat(50));
+    
+    // The round is usually voided and replayed with same dealer and winds
+    this.gamePhase = "finished";
+    this.saveGameState();
   }
 
   /**
@@ -264,22 +329,42 @@ export class RiichiMahjongMatch {
 
   /**
    * Adjusts points and rotates the dealer.
+   * Supports multiple winners for Double/Triple Ron.
    */
   finishRound(
-    winningPlayerName: string,
+    winners: { playerName: string; points: number }[],
     winType: string,
-    discardPlayerName: string | null = null,
-    pointAmount: number
+    discardPlayerName: string | null = null
   ): void {
-    const winner = this.players.find((p) => p.name === winningPlayerName);
-    if (!winner) {
-      console.log("Error: Winning player not found.");
+    if (winners.length === 0) {
+      console.log("Error: No winners provided.");
       return;
     }
 
     console.log("\n" + "=".repeat(50));
     console.log(`Round ${this.currentRound} Finished!`);
-    console.log(`Winner: ${winner.name}!`);
+
+    let dealerWon = false;
+    
+    // Find discarder index for Head Bump logic
+    let discarderIndex = -1;
+    if (winType.toLowerCase() === "ron" && discardPlayerName) {
+      discarderIndex = this.players.findIndex((p) => p.name === discardPlayerName);
+    }
+
+    // Determine who gets the riichi bets (Head Bump)
+    let closestWinner = winners[0];
+    if (winType.toLowerCase() === "ron" && discarderIndex !== -1 && winners.length > 1) {
+      let minDistance = 5;
+      for (const w of winners) {
+        const idx = this.players.findIndex((p) => p.name === w.playerName);
+        const dist = (idx - discarderIndex + this.numPlayers) % this.numPlayers;
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestWinner = w;
+        }
+      }
+    }
 
     if (winType.toLowerCase() === "ron") {
       if (!discardPlayerName) {
@@ -292,22 +377,46 @@ export class RiichiMahjongMatch {
         return;
       }
 
-      winner.score += pointAmount;
-      discarder.score -= pointAmount;
-      console.log(
-        `${winner.name} won with Ron! ${discarder.name} pays ${pointAmount} points.`
-      );
-    } else if (winType.toLowerCase() === "tsumo") {
-      const pointsPerPlayer = Math.floor(pointAmount / (this.numPlayers - 1));
-      this.players.forEach((player) => {
-        if (player.name !== winner.name) {
-          player.score -= pointsPerPlayer;
-          winner.score += pointsPerPlayer;
+      for (const w of winners) {
+        const winner = this.players.find((p) => p.name === w.playerName);
+        if (winner) {
+          winner.score += w.points;
+          discarder.score -= w.points;
+          console.log(`${winner.name} won with Ron! ${discarder.name} pays ${w.points} points.`);
+          if (winner.is_dealer) dealerWon = true;
+          
+          if (w === closestWinner && this.riichiBets > 0) {
+            const riichiPoints = this.riichiBets * 1000;
+            winner.score += riichiPoints;
+            console.log(`${winner.name} receives ${this.riichiBets} riichi bets (${riichiPoints} points).`);
+            this.riichiBets = 0;
+          }
         }
-      });
-      console.log(
-        `${winner.name} won with Tsumo! All other players pay ${pointsPerPlayer} points each.`
-      );
+      }
+    } else if (winType.toLowerCase() === "tsumo") {
+      const winnerData = winners[0];
+      const winner = this.players.find((p) => p.name === winnerData.playerName);
+      if (winner) {
+        // Tsumo points logic: if dealer wins, all others pay equally.
+        // If non-dealer wins, dealer pays more (approx half), others pay rest.
+        // Since we get the TOTAL points here, we divide them (simplified).
+        const pointsPerPlayer = Math.floor(winnerData.points / (this.numPlayers - 1));
+        this.players.forEach((player) => {
+          if (player.name !== winner.name) {
+            player.score -= pointsPerPlayer;
+            winner.score += pointsPerPlayer;
+          }
+        });
+        console.log(`${winner.name} won with Tsumo! All other players pay ${pointsPerPlayer} points each.`);
+        if (winner.is_dealer) dealerWon = true;
+        
+        if (this.riichiBets > 0) {
+          const riichiPoints = this.riichiBets * 1000;
+          winner.score += riichiPoints;
+          console.log(`${winner.name} receives ${this.riichiBets} riichi bets (${riichiPoints} points).`);
+          this.riichiBets = 0;
+        }
+      }
     } else {
       console.log("Invalid win type. Round ends without a winner.");
       return;
@@ -315,28 +424,38 @@ export class RiichiMahjongMatch {
 
     this._displayCurrentScores();
 
-    const hasRotated = !winner.is_dealer;
-    if (hasRotated) {
+    if (!dealerWon) {
       this.dealerIndex = (this.dealerIndex + 1) % this.numPlayers;
+      this.dealer = this.players[this.dealerIndex];
       console.log("Dealer has been rotated.");
       this._updatePlayerWinds();
+      this.currentRound++;
     } else {
-      console.log(
-        `Dealer ${winner.name} won, so they will be the dealer again for the next round.`
-      );
+      console.log(`Dealer won, so they will be the dealer again for the next round (Renchan).`);
     }
 
-    this.currentRound++;
-
-    if ((this.currentRound - 1) % this.numPlayers === 0) {
+    if ((this.currentRound - 1) % this.numPlayers === 0 && !dealerWon) {
       this._advancePrevalentWind();
     }
     this.gamePhase = "finished";
-    this.doraIndicators=[]
-    // Save game state at the end of each round
+    this.doraIndicators = [];
     this.saveGameState();
 
     console.log("=".repeat(50));
+  }
+
+  declareRiichi(playerName: string): void {
+    const player = this.players.find((p) => p.name === playerName);
+    if (player) {
+      if (player.score >= 1000) {
+        player.score -= 1000;
+        this.riichiBets++;
+        console.log(`${player.name} declares Riichi! Bet placed.`);
+        this.saveGameState();
+      } else {
+        console.log(`${player.name} does not have enough points to declare Riichi.`);
+      }
+    }
   }
 
   /**
@@ -356,6 +475,12 @@ export class RiichiMahjongMatch {
       dealerIndex: this.dealerIndex,
       gamePhase: this.gamePhase,
       doraIndicators: this.doraIndicators.map((tile) => tile.id),
+      riichiBets: this.riichiBets,
+      discards: Object.fromEntries(
+        Object.entries(this.discards)
+          .filter(([name]) => name && name.trim() !== "")
+          .map(([name, tiles]) => [name, tiles.map(t => t.id)])
+      ),
     };
     
     // Always save to localStorage as fallback
@@ -381,8 +506,9 @@ export class RiichiMahjongMatch {
     const savedState = localStorage.getItem("mahjongGameState");
     if (savedState) {
       const gameState = JSON.parse(savedState);
-      this.players = gameState.players.map((p: any) => {
-        const player = new Player(p.name, p.points);
+      this.players = gameState.players.map((p: any, i: number) => {
+        const playerName = p.name?.trim() ? p.name.trim() : `Player ${i + 1}`;
+        const player = new Player(playerName, p.points);
         player.wind = p.wind;
         player.is_dealer = p.is_dealer;
         return player;
@@ -391,16 +517,22 @@ export class RiichiMahjongMatch {
       this.currentRound = gameState.currentRound;
       this.dealerIndex = gameState.dealerIndex;
       this.dealer = this.players[this.dealerIndex];
-      this.gamePhase=gameState.gamePhase;
+      this.gamePhase = gameState.gamePhase;
       this.doraIndicators = gameState.doraIndicators
-        .map((name: string) => {
-          const tile = TILE_SET.get(name);
-          if (tile) {
-            return tile;
-          }
-          return null;
-        })
+        .map((name: string) => TILE_SET.get(name) || null)
         .filter((tile: MahjongTile | null) => tile !== null);
+
+      this.riichiBets = gameState.riichiBets || 0;
+      this.discards = {};
+      this.players.forEach(p => this.discards[p.name] = []);
+      if (gameState.discards) {
+        for (const [name, tileIds] of Object.entries(gameState.discards)) {
+          const validName = name.trim();
+          if (validName && this.discards[validName] !== undefined) {
+            this.discards[validName] = (tileIds as string[]).map(id => TILE_SET.get(id)!).filter(Boolean);
+          }
+        }
+      }
 
       this.numPlayers = this.players.length;
 

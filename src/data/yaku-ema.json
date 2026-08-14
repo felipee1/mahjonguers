@@ -1,0 +1,286 @@
+[
+  {
+    "category": "1 Han",
+    "yakus": [
+      {
+        "englishName": "Riichi",
+        "japaneseName": "Riichi",
+        "description": "Waiting hand declared at 1000 points stake.",
+        "concealedOnly": true,
+        "isSpecial": false
+      },
+      {
+        "englishName": "Fully Concealed Hand",
+        "japaneseName": "Menzen tsumo",
+        "description": "Winning on a self-draw on a concealed hand.",
+        "concealedOnly": true,
+        "isSpecial": false
+      },
+      {
+        "englishName": "Pinfu",
+        "japaneseName": "Pinfu",
+        "description": "Four chow and valueless pair. Must declare mahjong on a chow with two-sided wait.",
+        "concealedOnly": true,
+        "isSpecial": false
+      },
+      {
+        "englishName": "Pure Double Chow",
+        "japaneseName": "Iipeikou",
+        "description": "Two identical chows of the same suit.",
+        "concealedOnly": true,
+        "isSpecial": false
+      },
+      {
+        "englishName": "All Simples",
+        "japaneseName": "Tanyao chuu",
+        "description": "Hand with no terminals and honours.",
+        "concealedOnly": false,
+        "isSpecial": false
+      },
+      {
+        "englishName": "Mixed Triple Chow",
+        "japaneseName": "San shoku doujun",
+        "description": "Same chow in each suit (+1 han if concealed).",
+        "concealedOnly": false,
+        "isSpecial": true
+      },
+      {
+        "englishName": "Pure Straight",
+        "japaneseName": "Itsu",
+        "description": "The three chows 1-2-3, 4-5-6 and 7-8-9 of the same suit (+1 han if concealed).",
+        "concealedOnly": false,
+        "isSpecial": true
+      },
+      {
+        "englishName": "Dragon Pung",
+        "japaneseName": "Hanpai",
+        "description": "Pung/kong of dragons.",
+        "concealedOnly": false,
+        "isSpecial": false
+      },
+      {
+        "englishName": "Seat/Prevalent Wind",
+        "japaneseName": "Hanpai",
+        "description": "Pung/kong of seat or prevalent wind.",
+        "concealedOnly": false,
+        "isSpecial": false
+      },
+      {
+        "englishName": "Outside Hand",
+        "japaneseName": "Chanta",
+        "description": "All sets contain terminals/honours. At least one chow (+1 han if concealed).",
+        "concealedOnly": false,
+        "isSpecial": true
+      },
+      {
+        "englishName": "After a Kong",
+        "japaneseName": "Rinshan kaihou",
+        "description": "Winning on a replacement tile after declaring a kong.",
+        "concealedOnly": false,
+        "isSpecial": false
+      },
+      {
+        "englishName": "Robbing a Kong",
+        "japaneseName": "Chan kan",
+        "description": "Winning on a tile that an opponent adds to a melded pung in order to make a kong.",
+        "concealedOnly": false,
+        "isSpecial": false
+      },
+      {
+        "englishName": "Under the Sea",
+        "japaneseName": "Haitei / Houtei",
+        "description": "Winning on self-draw on the last tile in the wall, or winning on the last discard.",
+        "concealedOnly": false,
+        "isSpecial": false
+      }
+    ]
+  },
+  {
+    "category": "2 Han",
+    "yakus": [
+      {
+        "englishName": "Seven Pairs",
+        "japaneseName": "Chi Toitsu",
+        "description": "Concealed hand with seven different pairs.",
+        "concealedOnly": true,
+        "isSpecial": false
+      },
+      {
+        "englishName": "Triple Pung",
+        "japaneseName": "San shoku dokou",
+        "description": "Same pung/kong in each suit.",
+        "concealedOnly": false,
+        "isSpecial": false
+      },
+      {
+        "englishName": "Three Concealed Pungs",
+        "japaneseName": "San ankou",
+        "description": "Hand with three concealed pungs/kongs.",
+        "concealedOnly": false,
+        "isSpecial": false
+      },
+      {
+        "englishName": "Three Kongs",
+        "japaneseName": "San kan tsu",
+        "description": "Hand with three kongs.",
+        "concealedOnly": false,
+        "isSpecial": false
+      },
+      {
+        "englishName": "All Pungs",
+        "japaneseName": "Toitoi hou",
+        "description": "Hand with four pungs/kongs and a pair.",
+        "concealedOnly": false,
+        "isSpecial": false
+      },
+      {
+        "englishName": "Half Flush",
+        "japaneseName": "Honitsu",
+        "description": "One suit including honours (+1 han if concealed).",
+        "concealedOnly": false,
+        "isSpecial": true
+      },
+      {
+        "englishName": "Little Three Dragons",
+        "japaneseName": "Shou sangen",
+        "description": "Two pungs/kongs of dragons and a pair of dragons.",
+        "concealedOnly": false,
+        "isSpecial": false
+      },
+      {
+        "englishName": "All Terminals and Honours",
+        "japaneseName": "Honroutou",
+        "description": "Hand containing only terminals and honours.",
+        "concealedOnly": false,
+        "isSpecial": false
+      },
+      {
+        "englishName": "Terminals in All Sets",
+        "japaneseName": "Junchan",
+        "description": "All sets contain terminals. At least one chow (+1 han if concealed).",
+        "concealedOnly": false,
+        "isSpecial": true
+      }
+    ]
+  },
+  {
+    "category": "3 Han",
+    "yakus": [
+      {
+        "englishName": "Twice Pure Double Chow",
+        "japaneseName": "Ryan peikou",
+        "description": "Concealed hand with four chows which form two Pure Double Chows.",
+        "concealedOnly": true,
+        "isSpecial": false
+      }
+    ]
+  },
+  {
+    "category": "5 Han",
+    "yakus": [
+      {
+        "englishName": "Blessing of Man",
+        "japaneseName": "Renho",
+        "description": "Winning on a discard in the very first un-interrupted set of turns.",
+        "concealedOnly": true,
+        "isSpecial": false
+      },
+      {
+        "englishName": "Full Flush",
+        "japaneseName": "Chinitsu",
+        "description": "Hand composed entirely of tiles from only one of the three suits (+1 han if concealed).",
+        "concealedOnly": false,
+        "isSpecial": true
+      }
+    ]
+  },
+  {
+    "category": "Yakuman",
+    "yakus": [
+      {
+        "englishName": "Thirteen Orphans",
+        "japaneseName": "Kokushi musou",
+        "description": "One of each honour and terminal and one duplicate.",
+        "concealedOnly": true,
+        "isSpecial": false
+      },
+      {
+        "englishName": "Nine Gates",
+        "japaneseName": "Chuuren pooto",
+        "description": "Concealed hand consisting of the tiles 1112345678999 in the same suit plus any one extra tile in the same suit.",
+        "concealedOnly": true,
+        "isSpecial": false
+      },
+      {
+        "englishName": "Blessing of Heaven",
+        "japaneseName": "Tenho",
+        "description": "East winning on his initial deal.",
+        "concealedOnly": true,
+        "isSpecial": false
+      },
+      {
+        "englishName": "Blessing of Earth",
+        "japaneseName": "Chiho",
+        "description": "Winning on self-draw in the very first un-interrupted set of turns.",
+        "concealedOnly": true,
+        "isSpecial": false
+      },
+      {
+        "englishName": "Four Concealed Pungs",
+        "japaneseName": "Suu ankou",
+        "description": "Concealed hand with four concealed pungs/kongs.",
+        "concealedOnly": true,
+        "isSpecial": false
+      },
+      {
+        "englishName": "Four Kongs",
+        "japaneseName": "Suu kan tsu",
+        "description": "Hand with four kongs.",
+        "concealedOnly": false,
+        "isSpecial": false
+      },
+      {
+        "englishName": "All Green",
+        "japaneseName": "Ryuu iisou",
+        "description": "Hand composed entirely of green tiles: bamboo 2, 3, 4, 6, 8 and green dragon.",
+        "concealedOnly": false,
+        "isSpecial": false
+      },
+      {
+        "englishName": "All Terminals",
+        "japaneseName": "Chinrouto",
+        "description": "Hand composed entirely of terminal tiles.",
+        "concealedOnly": false,
+        "isSpecial": false
+      },
+      {
+        "englishName": "All Honours",
+        "japaneseName": "Tsuu iisou",
+        "description": "Hand composed entirely of honour tiles.",
+        "concealedOnly": false,
+        "isSpecial": false
+      },
+      {
+        "englishName": "Big Three Dragons",
+        "japaneseName": "Dai sangen",
+        "description": "Hand with three pungs/kongs of dragons.",
+        "concealedOnly": false,
+        "isSpecial": false
+      },
+      {
+        "englishName": "Little Four Winds",
+        "japaneseName": "Shou suushii",
+        "description": "Hand with three pungs/kongs of winds and a pair of winds.",
+        "concealedOnly": false,
+        "isSpecial": false
+      },
+      {
+        "englishName": "Big Four Winds",
+        "japaneseName": "Dai suushii",
+        "description": "Hand with four pungs/kongs of winds.",
+        "concealedOnly": false,
+        "isSpecial": false
+      }
+    ]
+  }
+]

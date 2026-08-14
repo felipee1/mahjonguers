@@ -97,11 +97,25 @@ export const DoraSelectionModal: React.FC<DoraSelectionModalProps> = ({
     }
   };
 
-  const handleConfirm = () => {
+  const [isIncorrectDetection, setIsIncorrectDetection] = useState(false);
+  const [isUploadingCorrection, setIsUploadingCorrection] = useState(false);
+
+  const handleConfirm = async () => {
     if (selectedTile) {
       const tile = MAHJONG_TILES.find((t) => t.id === selectedTile);
 
       if (tile) {
+        if (isIncorrectDetection && imagePreview) {
+          try {
+            setIsUploadingCorrection(true);
+            const { storageService } = await import("@/services/storageService");
+            await storageService.uploadCorrection(imagePreview, [tile.id], "dora-selection");
+          } catch (e) {
+            console.error("Failed to upload correction", e);
+          } finally {
+            setIsUploadingCorrection(false);
+          }
+        }
         onConfirm({ tile });
       }
     }
@@ -113,6 +127,8 @@ export const DoraSelectionModal: React.FC<DoraSelectionModalProps> = ({
     setImagePreview("");
     setDetectionError(null);
     setIsDetecting(false);
+    setIsIncorrectDetection(false);
+    setIsUploadingCorrection(false);
     if (imageElementRef.current) {
       imageElementRef.current = null;
     }
@@ -217,7 +233,7 @@ export const DoraSelectionModal: React.FC<DoraSelectionModalProps> = ({
               {/* Preview selected tile */}
               {selectedTile && (
                 <div className="flex justify-center">
-                  <div className="w-16 h-20 bg-muted rounded border-2 border-primary flex items-center justify-center p-1">
+                  <div className="w-16 h-20 bg-white text-black rounded border-2 border-primary flex items-center justify-center p-1">
                     <span className="text-2xl font-bold">
                       <img
                         src={
@@ -275,8 +291,8 @@ export const DoraSelectionModal: React.FC<DoraSelectionModalProps> = ({
                 <Label className="flex justify-center ">
                   {t("detectTile")}
                 </Label>
-                <div className="flex justify-center">
-                  <div className="w-16 h-20 bg-muted rounded border-2 border-primary flex items-center justify-center p-1">
+                <div className="flex justify-center flex-col items-center gap-2">
+                  <div className="w-16 h-20 bg-white text-black rounded border-2 border-primary flex items-center justify-center p-1">
                     <span className="text-2xl font-bold">
                       <img
                         src={
@@ -288,6 +304,20 @@ export const DoraSelectionModal: React.FC<DoraSelectionModalProps> = ({
                       />
                     </span>
                   </div>
+                  {imagePreview && (
+                    <div className="flex items-center space-x-2 mt-2">
+                      <input 
+                        type="checkbox" 
+                        id="incorrect-detection" 
+                        className="w-4 h-4"
+                        checked={isIncorrectDetection}
+                        onChange={(e) => setIsIncorrectDetection(e.target.checked)}
+                      />
+                      <Label htmlFor="incorrect-detection" className="cursor-pointer">
+                        {t("reportIncorrectDetection")}
+                      </Label>
+                    </div>
+                  )}
                 </div>
               </>
             )}
@@ -295,15 +325,15 @@ export const DoraSelectionModal: React.FC<DoraSelectionModalProps> = ({
         </Tabs>
 
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>
+          <Button variant="outline" onClick={handleClose} disabled={isUploadingCorrection}>
             {t("cancel")}
           </Button>
           <Button
             onClick={handleConfirm}
-            disabled={!canConfirm}
+            disabled={!canConfirm || isUploadingCorrection}
             className="bg-gradient-primary hover:shadow-elegant transition-smooth disabled:opacity-50"
           >
-            {t("confirm")}
+            {isUploadingCorrection ? t("uploading") : t("confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>

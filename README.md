@@ -39,6 +39,16 @@ All processing happens **directly in your browser** - your data stays private, a
 - Round-by-round score tracking
 - Match history to review past games
 
+### 🎲 Interactive Wall Setup
+- Animated 3D-like visualizer for building and breaking the Mahjong wall
+- Automatic dead wall boundary calculations matching standard CCW-selection and CW-drawing rules
+- Dynamic dealer assignment and dice-roll simulation
+
+### 🎨 Modern & Accessible UI
+- **Light & Dark Mode** support featuring the custom "Pineapple King" color palettes
+- Mobile-responsive design for use at the table
+- **Internationalization (i18n)** with full support for English and Portuguese (PT-BR)
+
 ### ☁️ Optional Cloud Sync
 
 - **Play without an account** - everything works with local storage
@@ -101,6 +111,8 @@ The app uses a **dual-storage strategy** for maximum flexibility:
 - **YOLOv8 + ONNX Runtime Web** - Custom-trained AI model for tile recognition
 - **Firebase** - Optional authentication and cloud sync
 - **Vite** - Lightning-fast development and builds
+- **i18next** - Internationalization support
+- **Graphify** - Codebase knowledge graph extraction
 
 ---
 
@@ -117,14 +129,43 @@ npm run dev
 npm run build
 ```
 
+---
+
 ## 🤝 Contributing
 
-Mahjonguers is open source! Contributions are welcome:
+Mahjonguers is open source and we welcome contributions from the community!
 
-- 🐛 Report bugs or issues
-- 💡 Suggest new features
-- 🔧 Submit pull requests
-- 📖 Improve documentation
+### Contribution Method
+
+To contribute to this project, please follow these standard steps:
+
+1. **Fork the repository** on GitHub.
+2. **Clone your fork** locally:
+   ```bash
+   git clone https://github.com/YOUR-USERNAME/mahjonguers.git
+   ```
+3. **Create a new branch** for your feature or bugfix:
+   ```bash
+   git checkout -b feature/my-awesome-feature
+   ```
+4. **Make your changes** and test them locally using `npm run dev`.
+5. **Update Graphify** (if you made code architecture changes) by running `graphify update .`.
+6. **Commit your changes** with descriptive commit messages:
+   ```bash
+   git commit -m "feat: add awesome new feature"
+   ```
+7. **Push your branch** to your fork:
+   ```bash
+   git push origin feature/my-awesome-feature
+   ```
+8. **Open a Pull Request** against the main repository and describe your changes.
+
+We welcome all types of contributions, including:
+- 🐛 Bug reports and fixes
+- 💡 Feature requests and implementations
+- 🌐 Translations and i18n improvements
+- 🎨 UI/UX enhancements and accessibility fixes
+- 📖 Documentation improvements
 
 ---
 

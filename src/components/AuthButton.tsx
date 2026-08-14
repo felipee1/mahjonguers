@@ -50,27 +50,25 @@ export const AuthButton: React.FC = () => {
 
   if (currentUser) {
     return (
-      <div className="fixed top-16 right-4 z-50 flex items-center gap-2">
-        <div className="flex items-center gap-2 bg-card/95 backdrop-blur-sm px-4 py-2 rounded-lg border border-border/50 shadow-lg">
-          <User className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">
-            {currentUser.email}
-          </span>
-          <Button
-            onClick={handleLogout}
-            variant="ghost"
-            size="sm"
-            className="ml-2"
-          >
-            <LogOut className="h-4 w-4" />
-          </Button>
-        </div>
+      <div className="flex items-center gap-2 bg-card/95 backdrop-blur-sm px-4 py-2 rounded-lg border border-border/50 shadow-lg">
+        <User className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm text-muted-foreground hidden sm:inline-block">
+          {currentUser.email}
+        </span>
+        <Button
+          onClick={handleLogout}
+          variant="ghost"
+          size="sm"
+          className="ml-2"
+        >
+          <LogOut className="h-4 w-4" />
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="fixed top-16 right-4 z-50">
+    <>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
           <Button
@@ -118,6 +116,6 @@ export const AuthButton: React.FC = () => {
           </form>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 };

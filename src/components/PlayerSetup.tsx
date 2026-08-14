@@ -79,18 +79,18 @@ export const PlayerSetup: React.FC<PlayerSetupProps> = ({
             {t("back")}
           </Button>
 
-          <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
+          <h1 className="text-5xl font-heading font-extrabold text-foreground mb-2">
             {t("playerSetup")}
           </h1>
-          <p className="text-muted-foreground">{t("enterPlayerNames")}</p>
+          <p className="text-muted-foreground font-sans">{t("enterPlayerNames")}</p>
         </div>
 
-        <Card className="p-8 shadow-elegant border-border/50 bg-card/95 backdrop-blur-sm">
+        <Card className="p-8 shadow-md border-border/50 bg-card/95 backdrop-blur-sm rounded-[16px]">
           <div className="space-y-6">
             {/* Players Section */}
             <div className="flex items-center justify-center mb-6">
               <Users className="h-6 w-6 mr-2 text-primary" />
-              <span className="text-xl font-semibold">
+              <span className="text-xl font-heading font-bold">
                 {t("enterPlayerNames")}
               </span>
             </div>
@@ -101,7 +101,7 @@ export const PlayerSetup: React.FC<PlayerSetupProps> = ({
                 <div key={index} className="space-y-2">
                   <Label
                     htmlFor={`player-${index}`}
-                    className="text-sm font-medium"
+                    className="text-sm font-sans font-medium"
                   >
                     {t("player")} {index + 1}
                   </Label>
@@ -110,17 +110,17 @@ export const PlayerSetup: React.FC<PlayerSetupProps> = ({
                     value={playerNames[index]}
                     onChange={(e) => handleNameChange(index, e.target.value)}
                     placeholder={`${t("player")} ${index + 1}`}
-                    className="transition-smooth focus:shadow-soft"
+                    className="transition-all focus:shadow-sm"
                   />
                 </div>
               ))}
             </div>
 
             {/* Wind Preview */}
-            <div className="bg-muted/30 rounded-lg p-4 mt-6">
+            <div className="bg-muted/30 rounded-[16px] p-4 mt-6">
               <div className="flex items-center justify-center mb-4">
                 <Shuffle className="h-5 w-5 mr-2 text-secondary" />
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm font-sans text-muted-foreground">
                   Winds will be randomly assigned
                 </span>
               </div>
@@ -129,10 +129,10 @@ export const PlayerSetup: React.FC<PlayerSetupProps> = ({
                   const windInfo = getWindDisplay(wind);
                   return (
                     <div key={wind} className="space-y-1">
-                      <div className="text-2xl text-primary">
+                      <div className="text-2xl text-primary font-heading font-bold">
                         {windInfo.char}
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs font-sans text-muted-foreground">
                         {windInfo.name}
                       </div>
                     </div>
@@ -145,7 +145,7 @@ export const PlayerSetup: React.FC<PlayerSetupProps> = ({
             <Button
               onClick={handleStartGame}
               size="lg"
-              className="w-full bg-gradient-primary hover:shadow-elegant transition-smooth mt-8"
+              className="w-full mt-8"
             >
               <Play className="mr-2 h-5 w-5" />
               {t("startGame")}

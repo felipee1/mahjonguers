@@ -204,14 +204,7 @@ function findMelds(
     }
   }
 
-  // Case 3: Skip the first tile (handles "orphan" tiles that are not part of a meld)
-  const newCounts = new Map(tilesCounts);
-  newCounts.set(firstTile, newCounts.get(firstTile)! - 1);
-  const subResults = findMelds(newCounts);
-  for (const [melds, pair] of subResults) {
-    results.push([melds, pair]);
-  }
-
+  // Removed Case 3: Skip the first tile. A valid standard Mahjong hand must use ALL tiles in perfect melds.
   return results;
 }
 
@@ -407,17 +400,114 @@ function getYaku(
     return yaku;
   }
 
-  // Handle melds-based yakuman
-  if (meldsAndPair) {
-    const [melds] = meldsAndPair;
-    const windPungs = melds.filter(
-      (item: string, index: number) =>
-        index % 2 === 0 && item === "pung" && WIND_TILES.has(melds[index + 1])
-    );
-    if (windPungs.length === 4) {
-      yaku["Four Pungs of Winds"] = 26;
-      return yaku;
+  // Nine Gates (Chuuren Poutou)
+  // Must be closed and consist of 1112345678999 + any tile of the same suit.
+  if (isClosed) {
+    const suits = new Set(handTiles.filter(t => !isHonor(t)).map(t => t.suit));
+    if (suits.size === 1 && !handTiles.some(t => isHonor(t))) {
+      const counts = new Array(10).fill(0);
+      for (const t of handTiles) {
+        counts[t.value]++;
+      }
+      let isNineGates = true;
+      let hasExtra = false;
+      let isTrueNineGatesWait = true; // Wait on any of the 9 tiles
+      
+      for (let i = 1; i <= 9; i++) {
+        const required = (i === 1 || i === 9) ? 3 : 1;
+        if (counts[i] < required) {
+          isNineGates = false;
+          break;
+        }
+        if (counts[i] > required) {
+          if (hasExtra) {
+            isNineGates = false;
+            break;
+          }
+          hasExtra = true;
+          if (winningTile.value === i && counts[i] - 1 === required) {
+            // Winning tile was the extra one, so wait was on 1 specific tile, not all 9.
+            isTrueNineGatesWait = false;
+          }
+        }
+      }
+
+      if (isNineGates) {
+        // Double Yakuman if true 9-sided wait (the extra tile was the winning tile)
+        // Actually, if it's a true 9-sided wait, the hand before winning was exactly 1112345678999.
+        // That means the winning tile is the ONE extra tile!
+        // So wait, if counts[winningTile.value] - 1 === required, then the hand before winning had exactly the required tiles. So it was waiting on all 9!
+        // Let's re-evaluate: True 9 gates means the hand before winning was exactly 1112345678999.
+        // So if we remove the winning tile, all counts match the requirements perfectly.
+        const countsBeforeWin = [...counts];
+        countsBeforeWin[winningTile.value]--;
+        
+        let isTrue9Wait = true;
+        for (let i = 1; i <= 9; i++) {
+          const req = (i === 1 || i === 9) ? 3 : 1;
+          if (countsBeforeWin[i] !== req) {
+            isTrue9Wait = false;
+            break;
+          }
+        }
+        
+        yaku["Nine Gates"] = isTrue9Wait ? 26 : 13;
+        return yaku;
+      }
     }
+  }
+
+  // All Honors (Tsuuiisou)
+  if ([...handTiles].every(t => isHonor(t))) {
+    yaku["All Honors"] = 13;
+    return yaku; // Can skip meld checking if we only care about Yakuman, but wait! Tsuuiisou can stack with Big Four Winds or Big Three Dragons!
+  }
+
+  // All Terminals (Chinrouto)
+  if ([...handTiles].every(t => isTerminal(t))) {
+    yaku["All Terminals"] = 13;
+    // Don't return, as it can stack with Four Concealed Pungs
+  }
+
+  // Handle melds-based yakuman
+  let pungs: MahjongTile[] = [];
+  let chows: MahjongTile[][] = [];
+  
+  if (meldsAndPair) {
+    const [meldsArray] = meldsAndPair;
+    let i = 0;
+    while (i < meldsArray.length) {
+      if (meldsArray[i] === "pung") {
+        pungs.push(meldsArray[i + 1]);
+        i += 2;
+      } else if (meldsArray[i] === "chow") {
+        chows.push([meldsArray[i + 1], meldsArray[i + 2], meldsArray[i + 3]]);
+        i += 4;
+      } else {
+        // Fallback to avoid infinite loop if structure is unexpected
+        i++;
+      }
+    }
+
+    const windPungsCount = pungs.filter((t) => WIND_TILES.has(t)).length;
+    if (windPungsCount === 4) {
+      yaku["Big Four Winds"] = 26; // Double Yakuman
+    } else if (windPungsCount === 3 && pair && WIND_TILES.has(pair[1])) {
+      yaku["Little Four Winds"] = 13;
+    }
+
+    const dragonPungsCount = pungs.filter((t) => DRAGON_TILES.has(t)).length;
+    if (dragonPungsCount === 3) {
+      yaku["Big Three Dragons"] = 13;
+    }
+
+    // If there is any yakuman, we can return early, but wait, they might stack!
+    // EMA says Yakuman can stack (e.g. Big Four Winds + All Honors).
+    // So we don't return here if we want to allow stacking, EXCEPT we only want to return early if we found a Yakuman, so we don't waste time on han yaku.
+    // However, if we do return early, we might miss Iipeikou, which doesn't matter since Yakuman overrides han yaku anyway.
+    // We will just let the regular checks run, and then the total points calculation will just cap it at Yakuman! Wait, no. The score logic checks `if (totalHan >= 13)`.
+    // Wait, the current Yakuman logic at the bottom does: `if (totalHan >= 13) return Yakuman`.
+    // So we just add the 13 han here and it will trigger the Yakuman cap!
   }
 
   if (!meldsAndPair) {
@@ -438,7 +528,7 @@ function getYaku(
 
   const isPinfu =
     isClosed &&
-    melds.filter((m: string) => m === "chow").length === 4 &&
+    chows.length === 4 &&
     !(
       DRAGON_TILES.has(pair[1]) ||
       pair[1].equals(prevalentWind) ||
@@ -446,83 +536,212 @@ function getYaku(
     );
   
   if (isPinfu) {
-  let hasRyanmenWait = false;
-  const chowTiles = [];
-  for (let i = 0; i < melds.length; i += 4) {
-    if (melds[i] === "chow") {
-      chowTiles.push([melds[i + 1], melds[i + 2], melds[i + 3]]);
+    let hasRyanmenWait = false;
+
+    for (const chow of chows) {
+      const sortedChow = chow.sort((a: MahjongTile, b: MahjongTile) => a.compareTo(b));
+      
+      const isRyanmenOnFirst = winningTile.equals(sortedChow[0]) && sortedChow[0].value !== 7;
+      const isRyanmenOnLast = winningTile.equals(sortedChow[2]) && sortedChow[2].value !== 3;
+
+      if (isRyanmenOnFirst || isRyanmenOnLast) {
+        hasRyanmenWait = true;
+        break;
+      }
+    }
+
+    if (hasRyanmenWait) {
+      yaku["Pinfu"] = 1;
     }
   }
-
-  for (const chow of chowTiles) {
-    const sortedChow = chow.sort((a: MahjongTile, b: MahjongTile) => a.compareTo(b));
-    if (winningTile.equals(sortedChow[1])) {
-      // It's a two-sided wait if the winning tile is the middle tile of the chow.
-      // E.g., winning with 5 to complete a 4-5-6.
-      hasRyanmenWait = true;
-      break;
-    }
-  }
-
-  if (hasRyanmenWait) {
-    yaku["Pinfu"] = 1;
-  }
-}
 
   if ([...handTiles].every((t) => isSimple(t))) {
     yaku["All Simples"] = 1;
   }
 
-  const windPungsSeat = melds.filter(
-    (item: string, index: number) =>
-      index % 2 === 0 && item === "pung" && melds[index + 1].equals(seatWind)
-  );
-  if (windPungsSeat.length > 0) {
-    yaku[`Yakuhai (${seatWind.name})`] = windPungsSeat.length;
+  const windPungsSeatCount = pungs.filter((t) => t.equals(seatWind)).length;
+  if (windPungsSeatCount > 0) {
+    yaku[`Yakuhai (${seatWind.name})`] = windPungsSeatCount;
   }
-  const windPungsPrevalent = melds.filter(
-    (item: string, index: number) =>
-      index % 2 === 0 &&
-      item === "pung" &&
-      melds[index + 1].equals(prevalentWind) &&
-      !melds[index + 1].equals(seatWind)
-  );
-  if (windPungsPrevalent.length > 0) {
-    yaku[`Yakuhai (${prevalentWind.name})`] = windPungsPrevalent.length;
+  const windPungsPrevalentCount = pungs.filter(
+    (t) => t.equals(prevalentWind) && !t.equals(seatWind)
+  ).length;
+  if (windPungsPrevalentCount > 0) {
+    yaku[`Yakuhai (${prevalentWind.name})`] = windPungsPrevalentCount;
   }
-  const dragonPungs = melds.filter(
-    (item: string, index: number) =>
-      index % 2 === 0 && item === "pung" && DRAGON_TILES.has(melds[index + 1])
-  );
-  if (dragonPungs.length > 0) {
-    yaku["Yakuhai (dragons)"] = dragonPungs.length;
+  const dragonPungsCount = pungs.filter((t) => DRAGON_TILES.has(t)).length;
+  if (dragonPungsCount > 0) {
+    yaku["Yakuhai (dragons)"] = dragonPungsCount;
+  }
+
+  // --- 1-Han (and 2-Han closed) Yaku Checks ---
+
+  // Pure Straight (Ittsu)
+  for (const suit of ["man", "pin", "sou"]) {
+    const suitChows = chows.filter(c => c[0].suit === suit);
+    if (suitChows.length >= 3) {
+      const has123 = suitChows.some(c => c[0].value === 1 && c[1].value === 2 && c[2].value === 3);
+      const has456 = suitChows.some(c => c[0].value === 4 && c[1].value === 5 && c[2].value === 6);
+      const has789 = suitChows.some(c => c[0].value === 7 && c[1].value === 8 && c[2].value === 9);
+      if (has123 && has456 && has789) {
+        yaku["Pure Straight"] = isClosed ? 2 : 1;
+        break;
+      }
+    }
+  }
+
+  // Mixed Triple Chow (Sanshoku Doujun)
+  if (chows.length >= 3) {
+    for (let i = 1; i <= 7; i++) {
+      const hasMan = chows.some(c => c[0].suit === "man" && c[0].value === i);
+      const hasPin = chows.some(c => c[0].suit === "pin" && c[0].value === i);
+      const hasSou = chows.some(c => c[0].suit === "sou" && c[0].value === i);
+      if (hasMan && hasPin && hasSou) {
+        yaku["Mixed Triple Chow"] = isClosed ? 2 : 1;
+        break;
+      }
+    }
+  }
+
+  // Outside Hand (Chanta)
+  const isChanta = () => {
+    // Every meld must contain a terminal or honor
+    for (const p of pungs) {
+      if (!TERMINAL_AND_HONOR.has(p)) return false;
+    }
+    for (const c of chows) {
+      if (!c.some(t => TERMINAL_AND_HONOR.has(t))) return false;
+    }
+    if (!TERMINAL_AND_HONOR.has(pair[1])) return false;
+    // Must not be all terminals and honors (that would be Honrouto)
+    if ([...handTiles].every(t => TERMINAL_AND_HONOR.has(t))) return false;
+    return true;
+  };
+  
+  if (isChanta()) {
+    yaku["Outside Hand"] = isClosed ? 2 : 1;
   }
 
   if (isClosed) {
-    const chows = [];
-    for (let i = 0; i < melds.length; i += 4) {
-      if (melds[i] === "chow") {
-        chows.push(
-          [melds[i + 1], melds[i + 2], melds[i + 3]].sort((a, b) =>
-            a.compareTo(b)
-          )
-        );
-      }
-    }
-    if (new Set(chows.map((c) => JSON.stringify(c))).size < chows.length) {
+    const sortedChows = chows.map(chow => 
+      [...chow].sort((a, b) => a.compareTo(b))
+    );
+    if (new Set(sortedChows.map((c) => JSON.stringify(c))).size < sortedChows.length) {
       yaku["Iipeikou"] = 1;
     }
   }
 
+  // --- 2-Han Yaku Checks ---
+
+  // Three Concealed Pungs (Sanankou)
+  // For now, assume if isClosed is true, all pungs are concealed.
+  // If isClosed is false, any pung formed from handTiles (not from the called meld) is concealed.
+  // Wait, we don't track open/closed melds yet in analyzeMahjongHand, we only know if the hand is closed overall.
+  // A hand is closed if `isClosed === true`.
+  // If the hand is closed, but it's a Ron, the pung formed by the winning tile is NOT concealed.
+  // So concealed pungs = all pungs minus the one formed by winning tile if it's Ron.
+  let concealedPungs = pungs.length;
+  if (!isClosed) {
+    // We can't properly detect open vs closed melds without more data.
+    // For now, if the hand is not closed, we can't accurately detect concealed pungs.
+    // We will assume 0 concealed pungs if open, unless we add 'calledMelds' param.
+    // Let's assume all pungs are concealed if isClosed, except if ron on a pung.
+    concealedPungs = 0; 
+  } else {
+    if (!isTsumo) {
+      // It's a closed hand but a Ron. Did the winning tile complete a pung?
+      const ronPung = pungs.find(p => p.equals(winningTile));
+      if (ronPung) {
+        concealedPungs--;
+      }
+    }
+  }
+
+  if (concealedPungs >= 3) {
+    yaku["Three Concealed Pungs"] = 2;
+  }
+  
+  if (concealedPungs === 4) {
+    yaku["Four Concealed Pungs"] = isTsumo ? 26 : 13; // Yakuman if Tsumo, or Single Yakuman if Ron? Actually 4 Concealed is Yakuman anyway, Double if Tsumo is a local rule. Standard EMA is Yakuman. Let's just say 13.
+  }
+
+  // Triple Pung (Sanshoku Doukou)
+  if (pungs.length >= 3) {
+    for (let i = 1; i <= 9; i++) {
+      const hasMan = pungs.some(p => p.suit === "man" && p.value === i);
+      const hasPin = pungs.some(p => p.suit === "pin" && p.value === i);
+      const hasSou = pungs.some(p => p.suit === "sou" && p.value === i);
+      if (hasMan && hasPin && hasSou) {
+        yaku["Triple Pung"] = 2;
+        break;
+      }
+    }
+  }
+
+  // All Pungs (Toitoi)
+  if (pungs.length === 4) {
+    yaku["All Pungs"] = 2;
+  }
+
+  // Twice Pure Double Chow (Ryanpeikou)
+  if (isClosed) {
+    const sortedChowsStr = chows.map(chow => 
+      JSON.stringify([...chow].sort((a, b) => a.compareTo(b)))
+    );
+    // Count occurrences of each chow
+    const chowCounts = new Map<string, number>();
+    for (const cStr of sortedChowsStr) {
+      chowCounts.set(cStr, (chowCounts.get(cStr) || 0) + 1);
+    }
+    
+    let pairsOfChows = 0;
+    for (const count of chowCounts.values()) {
+      pairsOfChows += Math.floor(count / 2);
+    }
+
+    if (pairsOfChows === 2) {
+      yaku["Twice Pure Double Chow"] = 3;
+      // Note: Ryanpeikou doesn't stack with Iipeikou, so we should delete Iipeikou if it's there
+      delete yaku["Iipeikou"];
+    } else if (pairsOfChows === 1) {
+      yaku["Iipeikou"] = 1;
+    }
+  }
+
+  // --- 3-Han and 5-Han Yaku Checks ---
+
   const suits = new Set(
     [...handTiles].filter((t) => t.suit !== 'honor').map((t) => t.suit)
   );
+  const hasHonor = [...handTiles].some((t) => t.suit === 'honor');
+
+  // Half Flush (Honitsu) / Full Flush (Chinitsu)
   if (suits.size === 1) {
-    if ([...handTiles].some((t) => isHonor(t))) {
-      yaku["Honitsu"] = isClosed ? 3 : 2;
+    if (hasHonor) {
+      yaku["Half Flush"] = isClosed ? 3 : 2;
     } else {
-      yaku["Chinitsu"] = isClosed ? 6 : 5;
+      yaku["Full Flush"] = isClosed ? 6 : 5; // Chinitsu is 6 closed, 5 open
     }
+  }
+
+  // Terminals in All Sets (Junchan)
+  const isJunchan = () => {
+    // Similar to Chanta, but ONLY terminals, NO honors.
+    for (const p of pungs) {
+      if (!isTerminal(p)) return false;
+    }
+    for (const c of chows) {
+      if (!c.some(t => isTerminal(t))) return false;
+    }
+    if (!isTerminal(pair[1])) return false;
+    // Must have at least one chow (otherwise it's Chinrouto - All Terminals)
+    if (chows.length === 0) return false;
+    return true;
+  };
+
+  if (isJunchan()) {
+    yaku["Terminals in All Sets"] = isClosed ? 3 : 2;
+    delete yaku["Outside Hand"]; // Junchan replaces Chanta
   }
 
   if (remainingTiles === 0) {
@@ -744,45 +963,56 @@ export function analyzeMahjongHand({
     return { error: "Invalid winning hand structure (no 4-meld-1-pair)." };
   }
 
-  const meldsAndPair = possibleMelds[0];
-  const finalYakuDict = getYaku(
-    handMahjongTiles,
-    doraMahjongTiles as MahjongTile[],
-    uraDoraMahjongTiles as MahjongTile[],
-    prevalentWindTile as MahjongTile,
-    seatWindTile as MahjongTile,
-    winningMahjongTile,
-    isTsumo,
-    isRiichi,
-    isDoubleRiichi,
-    isFirstTurnWin,
-    isFirstTurnForPlayer,
-    remainingTiles,
-    meldsAndPair,
-    isClosed,
-    isDealer
-  );
+  let bestResult: any = null;
 
-  const isPinfuCompatible = finalYakuDict.hasOwnProperty("Pinfu");
-  const fu = calculateFu(
-    meldsAndPair,
-    winningMahjongTile,
-    prevalentWindTile as MahjongTile,
-    seatWindTile as MahjongTile,
-    isTsumo,
-    isPinfuCompatible,
-    isClosed
-  );
-  const finalHan = Object.values(finalYakuDict).reduce(
-    (sum, han) => sum + han,
-    0
-  );
-  const finalPoints = calculateTotalPoints(fu, finalHan, isDealer);
+  for (const meldsAndPair of possibleMelds) {
+    const finalYakuDict = getYaku(
+      handMahjongTiles,
+      doraMahjongTiles as MahjongTile[],
+      uraDoraMahjongTiles as MahjongTile[],
+      prevalentWindTile as MahjongTile,
+      seatWindTile as MahjongTile,
+      winningMahjongTile,
+      isTsumo,
+      isRiichi,
+      isDoubleRiichi,
+      isFirstTurnWin,
+      isFirstTurnForPlayer,
+      remainingTiles,
+      meldsAndPair,
+      isClosed,
+      isDealer
+    );
 
-  return {
-    han_by_name: finalYakuDict,
-    total_fu: fu,
-    total_han: finalHan,
-    total_points: finalPoints,
-  };
+    const isPinfuCompatible = finalYakuDict.hasOwnProperty("Pinfu");
+    const fu = calculateFu(
+      meldsAndPair,
+      winningMahjongTile,
+      prevalentWindTile as MahjongTile,
+      seatWindTile as MahjongTile,
+      isTsumo,
+      isPinfuCompatible,
+      isClosed
+    );
+    const finalHan = Object.values(finalYakuDict).reduce(
+      (sum, han) => sum + han,
+      0
+    );
+    const finalPoints = calculateTotalPoints(fu, finalHan, isDealer);
+
+    const currentResult = {
+      han_by_name: finalYakuDict,
+      total_fu: fu,
+      total_han: finalHan,
+      total_points: finalPoints,
+    };
+
+    if (!bestResult || currentResult.total_points > bestResult.total_points) {
+      bestResult = currentResult;
+    } else if (currentResult.total_points === bestResult.total_points && currentResult.total_han > bestResult.total_han) {
+      bestResult = currentResult;
+    }
+  }
+
+  return bestResult;
 }

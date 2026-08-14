@@ -6,6 +6,7 @@ import {
     serverTimestamp,
     setDoc,
     updateDoc,
+    onSnapshot,
 } from 'firebase/firestore';
 
 export interface FirestoreGameState {
@@ -100,5 +101,57 @@ export const firestoreService = {
       console.error('Error saving match history to Firestore:', error);
       throw error;
     }
+  },
+
+  // Multiplayer Rooms
+  async createRoom(gameState: any): Promise<string> {
+    try {
+      const roomRef = doc(collection(db, 'rooms'));
+      await setDoc(roomRef, {
+        gameState,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      return roomRef.id;
+    } catch (error) {
+      console.error('Error creating room:', error);
+      throw error;
+    }
+  },
+
+  async getRoomState(roomId: string): Promise<any | null> {
+    try {
+      const roomRef = doc(db, 'rooms', roomId);
+      const roomSnap = await getDoc(roomRef);
+      if (roomSnap.exists()) {
+        return roomSnap.data().gameState;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting room state:', error);
+      throw error;
+    }
+  },
+
+  async updateRoomState(roomId: string, gameState: any): Promise<void> {
+    try {
+      const roomRef = doc(db, 'rooms', roomId);
+      await updateDoc(roomRef, {
+        gameState,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error('Error updating room state:', error);
+      throw error;
+    }
+  },
+
+  listenRoomState(roomId: string, callback: (gameState: any) => void): () => void {
+    const roomRef = doc(db, 'rooms', roomId);
+    return onSnapshot(roomRef, (snap: any) => {
+      if (snap.exists()) {
+        callback(snap.data().gameState);
+      }
+    });
   },
 };

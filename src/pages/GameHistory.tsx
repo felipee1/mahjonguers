@@ -59,67 +59,75 @@ export const GameHistory: React.FC<GameHistoryProps> = ({ onBack }) => {
       {/* Game History */}
       <div className="max-w-4xl mx-auto space-y-6">
         {gameHistory.length === 0 ? (
-          <Card className="p-8 text-center shadow-soft border-border/50 bg-card/95 backdrop-blur-sm">
+          <Card className="p-8 text-center shadow-md border-border/50 bg-card/95 backdrop-blur-sm rounded-[16px]">
             <Trophy className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h2 className="text-lg font-semibold mb-2">{t("noGamesPlayed")}</h2>
-            <p className="text-muted-foreground">{t("playFirstGame")}</p>
+            <h2 className="text-lg font-heading font-bold mb-2">{t("noGamesPlayed")}</h2>
+            <p className="text-muted-foreground font-sans">{t("playFirstGame")}</p>
           </Card>
         ) : (
           gameHistory.map((game, index) => (
             <Card
               key={game.id + index}
-              className="p-6 shadow-soft border-border/50 bg-card/95 backdrop-blur-sm"
+              className="p-6 shadow-md border-border/50 bg-card/95 backdrop-blur-sm rounded-[16px]"
             >
               <div className="space-y-4">
                 {/* Game Header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <Badge variant="outline" className="px-3 py-1">
+                    <Badge variant="outline" className="px-3 py-1 font-heading font-bold">
                       {t("game")} #{index + 1}
                     </Badge>
-                    <div className="flex items-center text-sm text-muted-foreground">
+                    <div className="flex items-center text-sm font-sans text-muted-foreground">
                       <Calendar className="h-4 w-4 mr-1" />
                       {formatDate(game.date)}
                     </div>
-                    <div className="flex items-center text-sm text-muted-foreground">
+                    <div className="flex items-center text-sm font-sans text-muted-foreground">
                       <Target className="h-4 w-4 mr-1" />
                       {game.totalRounds} {t("rounds")}
                     </div>
                   </div>
-                  <div className="flex items-center text-sm text-muted-foreground">
+                  <div className="flex items-center text-sm font-sans text-muted-foreground">
                     <Users className="h-4 w-4 mr-1" />
                     {game.players.length} {t("players")}
                   </div>
                 </div>
 
                 {/* Final Ranking */}
-                <div className="space-y-3">
-                  <h3 className="font-semibold flex items-center">
+                <div className="space-y-3 mt-4">
+                  <h3 className="font-heading font-extrabold flex items-center">
                     <Trophy className="h-4 w-4 mr-2 text-secondary" />
                     {t("finalRanking")}
                   </h3>
-                  <div className="grid gap-2">
-                    {game.finalRanking.map((player, index) => (
-                      <div
-                        key={`${game.id}-${player.name}-${index}`}
-                        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <Badge
-                            className={`${getRankBadgeColor(
-                              player.rank
-                            )} px-2 py-1 text-xs font-bold`}
-                          >
-                            #{player.rank}
-                          </Badge>
-                          <span className="font-medium">{player.name}</span>
-                        </div>
-                        <div className="text-lg font-bold text-primary">
-                          {player.points.toLocaleString()}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <table className="history-table">
+                    <thead>
+                      <tr>
+                        <th>Rank</th>
+                        <th>Player</th>
+                        <th className="text-right">Score</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {game.finalRanking.map((player, idx) => (
+                        <tr key={`${game.id}-${player.name}-${idx}`}>
+                          <td className="w-16">
+                            <Badge
+                              className={`${getRankBadgeColor(
+                                player.rank
+                              )} px-2 py-1 text-xs font-bold`}
+                            >
+                              #{player.rank}
+                            </Badge>
+                          </td>
+                          <td className="font-heading font-bold">
+                            {player.name}
+                          </td>
+                          <td className="text-right text-lg score-display text-primary">
+                            {player.points.toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </Card>

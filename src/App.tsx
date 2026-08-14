@@ -8,26 +8,33 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter as BrowserRouter, Route, Routes } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import { RulesHelp } from "./pages/RulesHelp";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import { SettingsToggle } from "@/components/SettingsToggle";
+
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <MahjongGameProvider>
-        <TooltipProvider>
-          <AuthButton />
-          <Toaster />
-          <Sonner />
-          <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.min.js"></script>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </MahjongGameProvider>
+      <LanguageProvider>
+        <MahjongGameProvider>
+          <TooltipProvider>
+            <SettingsToggle />
+            <Toaster />
+            <Sonner />
+            <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.min.js"></script>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/help" element={<RulesHelp />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </MahjongGameProvider>
+      </LanguageProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

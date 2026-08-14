@@ -87,6 +87,29 @@ const translations = {
     game: "Game",
     rounds: "Rounds",
     players: "Players",
+
+    // Multiplayer & ML
+    createRoom: "Create Room",
+    joinRoom: "Join Room",
+    enterRoomId: "Enter Room ID to join:",
+    reportIncorrectDetection: "Report Incorrect Detection (Upload for ML)",
+    detectedFromImage: "Detected from image",
+    uploading: "Uploading...",
+    roomCreated: "Room created! Share this ID with others: ",
+    joinedRoom: "Joined room successfully!",
+    roomJoinFailed: "Failed to join room. Check ID.",
+    roomCreateFailed: "Failed to create room:",
+    
+    // Wall Break
+    wallSetupTitle: "Wall Break Setup",
+    rollDice: "Roll Dice",
+    diceResult: "Dice Result",
+    deadWall: "Dead Wall (14 tiles)",
+    drawingDirection: "Drawing Direction",
+    continue: "Continue to Dora Selection",
+    dealerIsAt: "Dealer is at",
+    highlightedInGray: "highlighted in gray.",
+    indicatedByArrow: "indicated by the arrow (clockwise).",
   },
   pt: {
     // Main Menu
@@ -167,6 +190,29 @@ const translations = {
     game: "Jogo",
     rounds: "Rodadas",
     players: "Jogadores",
+
+    // Multiplayer & ML
+    createRoom: "Criar Sala",
+    joinRoom: "Entrar na Sala",
+    enterRoomId: "Insira o ID da Sala para entrar:",
+    reportIncorrectDetection: "Reportar Detecção Incorreta (Upload p/ ML)",
+    detectedFromImage: "Detectado a partir da imagem",
+    uploading: "Enviando...",
+    roomCreated: "Sala criada! Compartilhe este ID com os outros: ",
+    joinedRoom: "Entrou na sala com sucesso!",
+    roomJoinFailed: "Falha ao entrar na sala. Verifique o ID.",
+    roomCreateFailed: "Falha ao criar sala:",
+    
+    // Wall Break
+    wallSetupTitle: "Quebra da Muralha",
+    rollDice: "Rolar Dados",
+    diceResult: "Resultado dos Dados",
+    deadWall: "Muralha Morta (14 peças)",
+    drawingDirection: "Direção de Compra",
+    continue: "Continuar para Seleção de Dora",
+    dealerIsAt: "O dealer está em",
+    highlightedInGray: "destacado em cinza.",
+    indicatedByArrow: "indicado pela seta (horário).",
   },
 };
 

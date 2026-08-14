@@ -129,39 +129,53 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         <div className="grid grid-cols-2 gap-6 mb-8">
           {players.map((player, index) => {
             const windInfo = getWindDisplay(player.wind);
+            const asciiFaces = ["(•‿•)", "(⌐■_■)", "ʕ•ᴥ•ʔ", "(^_^)"];
+            const face = asciiFaces[index % asciiFaces.length];
+            const isDealer = player.wind.toLowerCase() === "east";
             return (
-              <Card
+              <div
                 key={index}
-                className="p-6 shadow-soft border-border/50 bg-card/95 backdrop-blur-sm"
+                className="player-card flex flex-col justify-between"
               >
                 <div className="flex items-center justify-between">
                   <div className="space-y-2">
-                    <div className="flex items-center space-x-3">
-                      <Badge
-                        className={`${windInfo.color} text-white px-3 py-1`}
-                      >
+                    <div className="flex items-center space-x-2">
+                      <div className={`w-8 h-8 flex-shrink-0 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm ${windInfo.color}`}>
                         {windInfo.char}
-                      </Badge>
-                      <span className="font-semibold text-lg">
+                      </div>
+
+                      <div className="relative flex-shrink-0">
+                        <span 
+                          className={`absolute -top-5 left-1/2 -translate-x-1/2 text-xl text-yellow-500 transition-opacity ${isDealer ? 'opacity-100' : 'opacity-0'}`} 
+                          title="Dealer"
+                        >
+                          🜲
+                        </span>
+                        <div className="w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center text-xs text-muted-foreground shadow-sm">
+                          {face}
+                        </div>
+                      </div>
+
+                      <span className="font-heading font-bold text-lg truncate">
                         {player.name}
                       </span>
                     </div>
-                    <div className="text-sm text-muted-foreground md:hidden">
+                    <div className="text-sm font-sans text-muted-foreground md:hidden">
                       {windInfo.name} • {t("score")}
                       <br />
-                      <div className="text-sm font-bold text-primary md:hidden">
+                      <div className="text-sm score-display text-primary md:hidden">
                         {formatScore(player.score)}
                       </div>
                     </div>
                   </div>
-                  <div className="text-2xl font-bold text-primary hidden sm:block ">
+                  <div className="text-2xl score-display text-primary hidden sm:block ">
                     {formatScore(player.score)}
                   </div>
                 </div>
-                <span className="text-sm text-muted-foreground hidden sm:block ">
+                <span className="text-sm font-sans text-muted-foreground hidden sm:block mt-2">
                   {windInfo.name}
                 </span>
-              </Card>
+              </div>
             );
           })}
         </div>
@@ -180,7 +194,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     {t("dora")} {index + 1}
                   </Badge>
                   <div className="flex justify-center">
-                    <div className="w-16 h-20 bg-muted rounded border-2 border-primary flex items-center justify-center p-1">
+                    <div className="w-16 h-20 bg-white text-black rounded border-2 border-primary flex items-center justify-center p-1">
                       {dora.imageUrl ? (
                         <span className="text-2xl font-bold">
                           <img
@@ -219,7 +233,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     {getDoraIndicatorTile(dora).type}
                   </Badge>
                   <div className="flex justify-center">
-                    <div className="w-16 h-20 bg-muted rounded border-2 border-primary flex items-center justify-center p-1">
+                    <div className="w-16 h-20 bg-white text-black rounded border-2 border-primary flex items-center justify-center p-1">
                       {getDoraIndicatorTile(dora).imageUrl ? (
                         <span className="text-2xl font-bold">
                           <img
@@ -251,7 +265,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             <Button
               onClick={onStartNewRound}
               size="lg"
-              className="w-full bg-gradient-primary hover:shadow-elegant transition-smooth"
+              variant="default"
+              className="w-full shadow-md hover:shadow-lg transition-smooth"
             >
               <Plus className="mr-2 h-5 w-5" />
               {t("startNewRound")}
@@ -300,7 +315,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             <Button
               onClick={onFinishMatch}
               size="lg"
-              className="w-full bg-gray-900 hover:shadow-elegant transition-smooth"
+              variant="destructive"
+              className="w-full transition-smooth"
             >
               <Minus className="mr-2 h-5 w-5" />
               {t("resetMatch")}

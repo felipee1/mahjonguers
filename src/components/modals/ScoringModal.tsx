@@ -189,13 +189,32 @@ export const ScoringModal: React.FC<ScoringModalProps> = ({
     setAnalysisResult(result);
   };
 
-  const handleConfirm = () => {
+  const [isIncorrectDetection, setIsIncorrectDetection] = useState(false);
+  const [isUploadingCorrection, setIsUploadingCorrection] = useState(false);
+
+  const handleConfirm = async () => {
     if (
       selectedTiles.length === 14 &&
       (actionType === "tsumo" || ronPlayer) &&
       analysisResult &&
       !analysisResult.error
     ) {
+      if (isIncorrectDetection && imagePreview) {
+        try {
+          setIsUploadingCorrection(true);
+          const { storageService } = await import("@/services/storageService");
+          await storageService.uploadCorrection(
+            imagePreview, 
+            selectedTiles.map(t => t.id), 
+            `scoring-${actionType}`
+          );
+        } catch (e) {
+          console.error("Failed to upload correction", e);
+        } finally {
+          setIsUploadingCorrection(false);
+        }
+      }
+
       const scoringData: ScoringData = {
         tiles: selectedTiles,
         isRiichi,
@@ -228,6 +247,8 @@ export const ScoringModal: React.FC<ScoringModalProps> = ({
     setIsClosed(true);
     setIsFirstTurnWin(false);
     setIsFirstTurnForPlayer(false);
+    setIsIncorrectDetection(false);
+    setIsUploadingCorrection(false);
     if (imageElementRef.current) {
       imageElementRef.current = null;
     }
@@ -339,7 +360,7 @@ export const ScoringModal: React.FC<ScoringModalProps> = ({
                     className="relative group"
                   >
                     <div className="flex justify-center">
-                      <div className="w-16 h-20 bg-muted rounded border-2 border-primary flex items-center justify-center p-1">
+                      <div className="w-16 h-20 bg-white text-black rounded border-2 border-primary flex items-center justify-center p-1">
                         <span className="text-2xl font-bold">
                           <img
                             src={tile?.imageUrl}
@@ -400,16 +421,30 @@ export const ScoringModal: React.FC<ScoringModalProps> = ({
                     )}
 
                     {imagePreview && (
-                      <div className="flex items-center gap-4">
-                        <div className="w-24 h-24 border-2 border-primary rounded overflow-hidden">
-                          <img
-                            src={imagePreview}
-                            alt="Tile preview"
-                            className="w-full h-full object-cover"
-                            ref={imageElementRef}
-                          />
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-4">
+                          <div className="w-24 h-24 border-2 border-primary rounded overflow-hidden">
+                            <img
+                              src={imagePreview}
+                              alt="Tile preview"
+                              className="w-full h-full object-cover"
+                              ref={imageElementRef}
+                            />
+                          </div>
+                          <p>{t("detectedFromImage")}</p>
                         </div>
-                        <p>{t("detectedFromImage")}</p>
+                        <div className="flex items-center space-x-2 mt-2">
+                          <input 
+                            type="checkbox" 
+                            id="incorrect-detection" 
+                            className="w-4 h-4"
+                            checked={isIncorrectDetection}
+                            onChange={(e) => setIsIncorrectDetection(e.target.checked)}
+                          />
+                          <Label htmlFor="incorrect-detection" className="cursor-pointer">
+                            {t("reportIncorrectDetection")}
+                          </Label>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -464,7 +499,7 @@ export const ScoringModal: React.FC<ScoringModalProps> = ({
                   className="relative group"
                 >
                   <div className="flex justify-center">
-                    <div className="w-16 h-20 bg-muted rounded border-2 border-primary flex items-center justify-center p-1">
+                    <div className="w-16 h-20 bg-white text-black rounded border-2 border-primary flex items-center justify-center p-1">
                       <span className="text-2xl font-bold">
                         <img
                           src={tile?.imageUrl}
@@ -670,7 +705,7 @@ export const ScoringModal: React.FC<ScoringModalProps> = ({
 
               {winningTile && (
                 <div className="flex justify-center">
-                  <div className="w-12 h-16 bg-muted rounded border-2 border-primary flex items-center justify-center p-1">
+                  <div className="w-12 h-16 bg-white text-black rounded border-2 border-primary flex items-center justify-center p-1">
                     <span className="text-2xl font-bold">
                       <img
                         src={winningTile.imageUrl}
@@ -701,7 +736,7 @@ export const ScoringModal: React.FC<ScoringModalProps> = ({
                     <div className="flex justify-center items-center gap-1 mb-4">
                       {selectedTiles.map((tile, index) => (
                         <div className="flex justify-center">
-                          <div className="w-8 h-12 bg-muted rounded border-2 border-primary flex items-center justify-center">
+                          <div className="w-8 h-12 bg-white text-black rounded border-2 border-primary flex items-center justify-center">
                             <span className="text-2xl font-bold">
                               <img
                                 src={tile.imageUrl}
@@ -723,7 +758,7 @@ export const ScoringModal: React.FC<ScoringModalProps> = ({
                         </span>
                         {doras.map((tile, index) => (
                           <div className="flex justify-center">
-                            <div className="w-6 h-8 bg-muted rounded border-2 border-primary flex items-center justify-center">
+                            <div className="w-6 h-8 bg-white text-black rounded border-2 border-primary flex items-center justify-center">
                               <span className="text-2xl font-bold">
                                 <img
                                   src={tile.imageUrl}
@@ -742,7 +777,7 @@ export const ScoringModal: React.FC<ScoringModalProps> = ({
                         </span>
                         {uraDoras.map((tile, index) => (
                           <div className="flex justify-center">
-                            <div className="w-6 h-8 bg-muted rounded border-2 border-primary flex items-center justify-center">
+                            <div className="w-6 h-8 bg-white text-black rounded border-2 border-primary flex items-center justify-center">
                               <span className="text-2xl font-bold">
                                 <img
                                   src={tile.imageUrl}
@@ -819,7 +854,7 @@ export const ScoringModal: React.FC<ScoringModalProps> = ({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>
+          <Button variant="outline" onClick={handleClose} disabled={isUploadingCorrection}>
             {t("cancel")}
           </Button>
           <Button
@@ -827,14 +862,14 @@ export const ScoringModal: React.FC<ScoringModalProps> = ({
             disabled={!canAnalyze}
             className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-colors disabled:opacity-50"
           >
-            Analyze Hand
+            {t("analyzeHand")}
           </Button>
           <Button
             onClick={handleConfirm}
-            disabled={!analysisResult || analysisResult.error}
+            disabled={!analysisResult || analysisResult.error || isUploadingCorrection}
             className="bg-gradient-primary hover:shadow-elegant transition-smooth disabled:opacity-50"
           >
-            {t("confirm")}
+            {isUploadingCorrection ? t("uploading") : t("confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>
